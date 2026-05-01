@@ -47,3 +47,6 @@ class MatchRead(MatchBase):
     completed_at: Optional[datetime]
     created_at: datetime
     updated_at: datetime
+    pet_name: Optional[str] = None
+    adopter_name: Optional[str] = None
+    donor_name: Optional[str] = None

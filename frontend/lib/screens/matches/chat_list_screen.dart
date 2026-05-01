@@ -63,6 +63,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
         itemCount: provider.chats.length,
         itemBuilder: (context, index) {
           final chat = provider.chats[index];
+          final isAdopter = chat.adopterId == userId;
+          final label = isAdopter ? 'Donante' : 'Adoptante';
 
           return ListTile(
             leading: CircleAvatar(
@@ -70,7 +72,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
               child: Icon(Icons.person,
                   color: Theme.of(context).colorScheme.primary),
             ),
-            title: const Text('Conversación'),
+            title: Text(label),
             subtitle: Text(
               chat.isActive ? 'Activo' : 'Finalizado',
               style: TextStyle(

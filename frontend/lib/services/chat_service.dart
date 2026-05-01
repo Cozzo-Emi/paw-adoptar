@@ -60,8 +60,9 @@ class ChatService {
     final token = await _storage.read(key: 'access_token');
     if (token == null) return;
 
-    final baseUrl = AppConstants.apiBaseUrl.replaceFirst('http', 'ws');
-    final wsUrl = Uri.parse('$baseUrl/chats/$chatId/ws?token=$token');
+    final base = AppConstants.apiBaseUrl;
+    final wsBase = base.startsWith('https') ? base.replaceFirst('https', 'wss') : base.replaceFirst('http', 'ws');
+    final wsUrl = Uri.parse('$wsBase/chats/$chatId/ws?token=$token');
 
     _channel = WebSocketChannel.connect(wsUrl);
 

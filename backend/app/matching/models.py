@@ -105,6 +105,18 @@ class Match(Base):
         back_populates="match", cascade="all, delete-orphan"
     )
 
+    @property
+    def pet_name(self) -> str | None:
+        return self.pet.name if self.pet else None
+
+    @property
+    def adopter_name(self) -> str | None:
+        return self.adopter.full_name if self.adopter else None
+
+    @property
+    def donor_name(self) -> str | None:
+        return self.donor.full_name if self.donor else None
+
     def __repr__(self) -> str:
         return f"<Match adopter={self.adopter_id} pet={self.pet_id} ({self.status.value})>"
 

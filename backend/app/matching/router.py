@@ -130,6 +130,11 @@ async def list_my_matches(
     stmt = (
         select(Match)
         .where(or_(*conditions))
+        .options(
+            selectinload(Match.pet),
+            selectinload(Match.adopter),
+            selectinload(Match.donor),
+        )
         .order_by(Match.created_at.desc())
     )
 

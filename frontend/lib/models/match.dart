@@ -11,6 +11,9 @@ class Match {
   final DateTime? completedAt;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? petName;
+  final String? adopterName;
+  final String? donorName;
 
   const Match({
     required this.id,
@@ -25,6 +28,9 @@ class Match {
     this.completedAt,
     required this.createdAt,
     required this.updatedAt,
+    this.petName,
+    this.adopterName,
+    this.donorName,
   });
 
   bool get isPending => status == 'pending';
@@ -67,6 +73,9 @@ class Match {
           : null,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
+      petName: json['pet_name'] as String?,
+      adopterName: json['adopter_name'] as String?,
+      donorName: json['donor_name'] as String?,
     );
   }
 }

@@ -145,18 +145,26 @@ class _MatchInboxScreenState extends State<MatchInboxScreen> {
 
   void _handleGoToChat(String matchId) async {
     final chatProvider = context.read<ChatProvider>();
-    final chat = chatProvider.chats
+    final matchProvider = context.read<MatchProvider>();
+    final userId = context.read<AuthProvider>().user?.id ?? '';
+    
+    final match = matchProvider.matches
+        .where((m) => m.id == matchId)
+        .firstOrNull;
+    final otherName = match?.adopterId == userId ? match?.donorName : match?.adopterName;
+
+    var chat = chatProvider.chats
         .where((c) => c.matchId == matchId)
         .firstOrNull;
 
     if (chat == null) {
-      // Create if not exists
       final newChat = await chatProvider.createChat(matchId);
-      if (newChat != null && mounted) {
-        context.go('/chat/${newChat.id}');
-      }
-    } else if (mounted) {
-      context.go('/chat/${chat.id}');
+      chat = newChat;
+    }
+    
+    if (chat != null && mounted) {
+      final nameParam = otherName != null ? '?name=${Uri.encodeComponent(otherName)}' : '';
+      context.go('/chat/${chat.id}$nameParam');
     }
   }
 }
@@ -180,6 +188,13 @@ class _MatchCard extends StatelessWidget {
     this.onReview,
   });
 
+  String get _otherName {
+    if (match.adopterId == userId) {
+      return match.donorName ?? 'Donante';
+    }
+    return match.adopterName ?? 'Adoptante';
+  }
+
   Color _statusColor() {
     switch (match.status) {
       case 'pending':
@@ -200,7 +215,7 @@ class _MatchCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: Padding(
+        child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,6 +248,24 @@ class _MatchCard extends StatelessWidget {
                     ),
                   ),
               ],
+            ),
+            if (match.petName != null) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.pets, size: 16, color: Color(0xFF6C63FF)),
+                  const SizedBox(width: 4),
+                  Text(
+                    match.petName!,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 4),
+            Text(
+              _otherName,
+              style: TextStyle(color: Colors.grey[600], fontSize: 13),
             ),
             if (match.adopterMessage != null) ...[
               const SizedBox(height: 8),

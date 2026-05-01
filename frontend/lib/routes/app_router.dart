@@ -24,6 +24,7 @@ import '../services/api_client.dart';
 import '../services/chat_service.dart';
 import '../services/match_service.dart';
 import '../services/pet_service.dart';
+import '../widgets/scaffold_with_navbar.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -41,6 +42,12 @@ GoRouter buildRouter({
   final chatService = ChatService(client: apiClient, storage: secureStorage);
   final chatProvider = ChatProvider(chatService: chatService);
 
+  final shellProviders = [
+    ChangeNotifierProvider.value(value: petProvider),
+    ChangeNotifierProvider.value(value: matchProvider),
+    ChangeNotifierProvider.value(value: chatProvider),
+  ];
+
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     refreshListenable: authProvider,
@@ -52,9 +59,7 @@ GoRouter buildRouter({
           state.matchedLocation == '/splash' ||
           state.matchedLocation == '/role-selection';
 
-      if (authProvider.status == AuthStatus.unknown) {
-        return '/splash';
-      }
+      if (authProvider.status == AuthStatus.unknown) return '/splash';
 
       if (!isAuth && !isAuthRoute) return '/login';
       if (isAuth && isAuthRoute) return '/feed';
@@ -78,98 +83,99 @@ GoRouter buildRouter({
         path: '/role-selection',
         builder: (context, state) => const RoleSelectionScreen(),
       ),
-      GoRoute(
-        path: '/feed',
-        builder: (context, state) {
-          return MultiProvider(
-            providers: [
-              ChangeNotifierProvider.value(value: petProvider),
-              ChangeNotifierProvider.value(value: matchProvider),
-            ],
-            child: const PetFeedScreen(),
-          );
-        },
-      ),
-      GoRoute(
-        path: '/feed/:petId',
-        builder: (context, state) {
-          final petId = state.pathParameters['petId']!;
-          return MultiProvider(
-            providers: [
-              ChangeNotifierProvider.value(value: petProvider),
-              ChangeNotifierProvider.value(value: matchProvider),
-            ],
-            child: PetDetailScreen(petId: petId),
-          );
-        },
-      ),
-      GoRoute(
-        path: '/donor',
-        builder: (context, state) => ChangeNotifierProvider.value(
-          value: matchProvider,
-          child: const DonorDashboardScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/donor/publish',
-        builder: (context, state) => const PetCreationScreen(),
-      ),
-      GoRoute(
-        path: '/matches',
-        builder: (context, state) {
-          return MultiProvider(
-            providers: [
-              ChangeNotifierProvider.value(value: matchProvider),
-              ChangeNotifierProvider.value(value: chatProvider),
-            ],
-            child: const MatchInboxScreen(),
-          );
-        },
-      ),
-      GoRoute(
-        path: '/chats',
-        builder: (context, state) => ChangeNotifierProvider.value(
-          value: chatProvider,
-          child: const ChatListScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/chat/:chatId',
-        builder: (context, state) {
-          final chatId = state.pathParameters['chatId']!;
-          return ChangeNotifierProvider.value(
-            value: chatProvider,
-            child: ChatRoomScreen(chatId: chatId),
-          );
-        },
-      ),
-      GoRoute(
-        path: '/evidence/:matchId',
-        builder: (context, state) {
-          final matchId = state.pathParameters['matchId']!;
-          final match = matchProvider.matches
-              .where((m) => m.id == matchId)
-              .firstOrNull;
-          if (match == null) return const SizedBox.shrink();
-          return ChangeNotifierProvider.value(
-            value: matchProvider,
-            child: EvidenceScreen(match: match),
-          );
-        },
-      ),
-      GoRoute(
-        path: '/review/:matchId',
-        builder: (context, state) {
-          final matchId = state.pathParameters['matchId']!;
-          final match = matchProvider.matches
-              .where((m) => m.id == matchId)
-              .firstOrNull;
-          if (match == null) return const SizedBox.shrink();
-          return ChangeNotifierProvider.value(
-            value: matchProvider,
-            child: ReviewScreen(match: match),
-          );
-        },
+      ShellRoute(
+        builder: (context, state, child) => ScaffoldWithNavBar(child: child),
+        routes: [
+          GoRoute(
+            path: '/feed',
+            builder: (context, state) => MultiProvider(
+              providers: shellProviders,
+              child: const PetFeedScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/feed/:petId',
+            parentNavigatorKey: rootNavigatorKey,
+            builder: (context, state) {
+              final petId = state.pathParameters['petId']!;
+              return MultiProvider(
+                providers: shellProviders,
+                child: PetDetailScreen(petId: petId),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/donor',
+            builder: (context, state) => MultiProvider(
+              providers: shellProviders,
+              child: const DonorDashboardScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/donor/publish',
+            parentNavigatorKey: rootNavigatorKey,
+            builder: (context, state) => MultiProvider(
+              providers: shellProviders,
+              child: const PetCreationScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/matches',
+            builder: (context, state) => MultiProvider(
+              providers: shellProviders,
+              child: const MatchInboxScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/chats',
+            builder: (context, state) => ChangeNotifierProvider.value(
+              value: chatProvider,
+              child: const ChatListScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/chat/:chatId',
+            parentNavigatorKey: rootNavigatorKey,
+            builder: (context, state) {
+              final chatId = state.pathParameters['chatId']!;
+              final otherName = state.uri.queryParameters['name'];
+              return ChangeNotifierProvider.value(
+                value: chatProvider,
+                child: ChatRoomScreen(chatId: chatId, otherName: otherName),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/evidence/:matchId',
+            parentNavigatorKey: rootNavigatorKey,
+            builder: (context, state) {
+              final matchId = state.pathParameters['matchId']!;
+              final match = matchProvider.matches
+                  .where((m) => m.id == matchId)
+                  .firstOrNull;
+              if (match == null) return const SizedBox.shrink();
+              return ChangeNotifierProvider.value(
+                value: matchProvider,
+                child: EvidenceScreen(match: match),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/review/:matchId',
+            parentNavigatorKey: rootNavigatorKey,
+            builder: (context, state) {
+              final matchId = state.pathParameters['matchId']!;
+              final match = matchProvider.matches
+                  .where((m) => m.id == matchId)
+                  .firstOrNull;
+              if (match == null) return const SizedBox.shrink();
+              return ChangeNotifierProvider.value(
+                value: matchProvider,
+                child: ReviewScreen(match: match),
+              );
+            },
+          ),
+        ],
       ),
     ],
   );

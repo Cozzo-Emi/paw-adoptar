@@ -6,8 +6,9 @@ import '../../providers/chat_provider.dart';
 
 class ChatRoomScreen extends StatefulWidget {
   final String chatId;
+  final String? otherName;
 
-  const ChatRoomScreen({super.key, required this.chatId});
+  const ChatRoomScreen({super.key, required this.chatId, this.otherName});
 
   @override
   State<ChatRoomScreen> createState() => _ChatRoomScreenState();
@@ -62,7 +63,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Chat'),
+        title: Text(widget.otherName ?? 'Chat'),
       ),
       body: Column(
         children: [
