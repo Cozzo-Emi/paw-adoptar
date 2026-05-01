@@ -97,6 +97,15 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updateProfile({String? role, String? city, String? province}) async {
+    _user = await _authService.updateProfile(
+      role: role,
+      city: city,
+      province: province,
+    );
+    notifyListeners();
+  }
+
   void clearError() {
     _error = null;
     notifyListeners();

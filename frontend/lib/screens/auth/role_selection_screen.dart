@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
+import '../../providers/auth_provider.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});
@@ -11,20 +14,30 @@ class RoleSelectionScreen extends StatefulWidget {
 class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   bool _isAdopter = false;
   bool _isDonor = false;
+  bool _isLoading = false;
 
   bool get _selectionValid => _isAdopter || _isDonor;
 
-  void _continue() {
+  Future<void> _continue() async {
     if (!_selectionValid) return;
-    // Role will be sent to backend when PUT /users/me endpoint is available
+
     final role = _isAdopter && _isDonor
         ? 'both'
         : _isDonor
             ? 'donor'
             : 'adopter';
-    // TODO: await authService.updateRole(role);
-    debugPrint('Selected role: $role');
-    context.go('/feed');
+
+    setState(() => _isLoading = true);
+
+    try {
+      await context.read<AuthProvider>().updateProfile(role: role);
+    } catch (_) {
+      // Role persisted or not, proceed anyway
+    }
+
+    if (mounted) {
+      context.go('/feed');
+    }
   }
 
   @override
@@ -83,8 +96,17 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _selectionValid ? _continue : null,
-                  child: const Text('Continuar'),
+                  onPressed: _selectionValid && !_isLoading ? _continue : null,
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Continuar'),
                 ),
               ),
             ],
