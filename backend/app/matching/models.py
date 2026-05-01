@@ -107,15 +107,24 @@ class Match(Base):
 
     @property
     def pet_name(self) -> str | None:
-        return self.pet.name if self.pet else None
+        try:
+            return self.pet.name if self.pet else None
+        except Exception:
+            return None
 
     @property
     def adopter_name(self) -> str | None:
-        return self.adopter.full_name if self.adopter else None
+        try:
+            return self.adopter.full_name if self.adopter else None
+        except Exception:
+            return None
 
     @property
     def donor_name(self) -> str | None:
-        return self.donor.full_name if self.donor else None
+        try:
+            return self.donor.full_name if self.donor else None
+        except Exception:
+            return None
 
     def __repr__(self) -> str:
         return f"<Match adopter={self.adopter_id} pet={self.pet_id} ({self.status.value})>"
