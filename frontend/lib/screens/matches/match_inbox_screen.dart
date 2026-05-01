@@ -93,13 +93,15 @@ class _MatchInboxScreenState extends State<MatchInboxScreen> {
                   ),
             ),
             const SizedBox(height: 8),
-            ...pending.map((m) => _MatchCard(
-                  match: m,
-                  userId: userId,
-                  onAccept: () => _handleAccept(m.id),
-                  onReject: () => _handleReject(m.id),
-                  onChat: () => _handleGoToChat(m.id),
-                )),
+              ...pending.map((m) => _MatchCard(
+                    match: m,
+                    userId: userId,
+                    onAccept: () => _handleAccept(m.id),
+                    onReject: () => _handleReject(m.id),
+                    onChat: () => _handleGoToChat(m.id),
+                    onEvidence: null,
+                    onReview: null,
+                  )),
             if (others.isNotEmpty) const SizedBox(height: 24),
           ],
           if (others.isNotEmpty) ...[
@@ -116,6 +118,12 @@ class _MatchInboxScreenState extends State<MatchInboxScreen> {
                   onAccept: null,
                   onReject: null,
                   onChat: m.isAccepted ? () => _handleGoToChat(m.id) : null,
+                  onEvidence: m.isAccepted || m.isCompleted
+                      ? () => context.go('/evidence/${m.id}')
+                      : null,
+                  onReview: m.isAccepted || m.isCompleted
+                      ? () => context.go('/review/${m.id}')
+                      : null,
                 )),
           ],
         ],
@@ -159,6 +167,8 @@ class _MatchCard extends StatelessWidget {
   final VoidCallback? onAccept;
   final VoidCallback? onReject;
   final VoidCallback? onChat;
+  final VoidCallback? onEvidence;
+  final VoidCallback? onReview;
 
   const _MatchCard({
     required this.match,
@@ -166,6 +176,8 @@ class _MatchCard extends StatelessWidget {
     this.onAccept,
     this.onReject,
     this.onChat,
+    this.onEvidence,
+    this.onReview,
   });
 
   Color _statusColor() {
@@ -231,10 +243,11 @@ class _MatchCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ],
-            if (onAccept != null || onReject != null || onChat != null) ...[
+            if (onAccept != null || onReject != null || onChat != null || onEvidence != null || onReview != null) ...[
               const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
                 children: [
                   if (onReject != null)
                     OutlinedButton(
@@ -245,21 +258,29 @@ class _MatchCard extends StatelessWidget {
                       ),
                       child: const Text('Rechazar'),
                     ),
-                  if (onAccept != null) ...[
-                    const SizedBox(width: 8),
+                  if (onAccept != null)
                     ElevatedButton(
                       onPressed: onAccept,
                       child: const Text('Aceptar'),
                     ),
-                  ],
-                  if (onChat != null) ...[
-                    const SizedBox(width: 8),
+                  if (onChat != null)
                     ElevatedButton.icon(
                       onPressed: onChat,
                       icon: const Icon(Icons.chat, size: 18),
                       label: const Text('Chat'),
                     ),
-                  ],
+                  if (onEvidence != null)
+                    OutlinedButton.icon(
+                      onPressed: onEvidence,
+                      icon: const Icon(Icons.camera_alt, size: 18),
+                      label: const Text('Evidencia'),
+                    ),
+                  if (onReview != null)
+                    OutlinedButton.icon(
+                      onPressed: onReview,
+                      icon: const Icon(Icons.star, size: 18),
+                      label: const Text('Valorar'),
+                    ),
                 ],
               ),
             ],

@@ -38,4 +38,40 @@ class MatchService {
     final response = await _client.dio.put('/matches/$matchId/reject');
     return Match.fromJson(response.data as Map<String, dynamic>);
   }
+
+  Future<Map<String, dynamic>> submitEvidence({
+    required String matchId,
+    required String photoUrl,
+    required String cloudinaryPublicId,
+    required String statusNote,
+  }) async {
+    final response = await _client.dio.post(
+      '/matches/$matchId/evidence',
+      data: {
+        'match_id': matchId,
+        'photo_url': photoUrl,
+        'cloudinary_public_id': cloudinaryPublicId,
+        'status_note': statusNote,
+      },
+    );
+    return response.data as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> submitReview({
+    required String matchId,
+    required String reviewedId,
+    required int rating,
+    String? comment,
+  }) async {
+    final response = await _client.dio.post(
+      '/moderation/reviews',
+      data: {
+        'match_id': matchId,
+        'reviewed_id': reviewedId,
+        'rating': rating,
+        if (comment != null) 'comment': comment,
+      },
+    );
+    return response.data as Map<String, dynamic>;
+  }
 }

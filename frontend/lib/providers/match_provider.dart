@@ -87,4 +87,51 @@ class MatchProvider extends ChangeNotifier {
       return false;
     }
   }
+
+  Future<bool> submitEvidence({
+    required String matchId,
+    required String photoUrl,
+    required String cloudinaryPublicId,
+    required String statusNote,
+  }) async {
+    _error = null;
+
+    try {
+      await _matchService.submitEvidence(
+        matchId: matchId,
+        photoUrl: photoUrl,
+        cloudinaryPublicId: cloudinaryPublicId,
+        statusNote: statusNote,
+      );
+      await loadMatches();
+      return true;
+    } catch (e) {
+      _error = 'No se pudo subir la evidencia.';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> submitReview({
+    required String matchId,
+    required String reviewedId,
+    required int rating,
+    String? comment,
+  }) async {
+    _error = null;
+
+    try {
+      await _matchService.submitReview(
+        matchId: matchId,
+        reviewedId: reviewedId,
+        rating: rating,
+        comment: comment,
+      );
+      return true;
+    } catch (e) {
+      _error = 'No se pudo enviar la valoración.';
+      notifyListeners();
+      return false;
+    }
+  }
 }

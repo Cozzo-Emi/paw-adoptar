@@ -18,6 +18,8 @@ import '../screens/donor/pet_creation_screen.dart';
 import '../screens/matches/match_inbox_screen.dart';
 import '../screens/matches/chat_list_screen.dart';
 import '../screens/matches/chat_room_screen.dart';
+import '../screens/post_adoption/evidence_screen.dart';
+import '../screens/post_adoption/review_screen.dart';
 import '../services/api_client.dart';
 import '../services/chat_service.dart';
 import '../services/match_service.dart';
@@ -138,6 +140,34 @@ GoRouter buildRouter({
           return ChangeNotifierProvider.value(
             value: chatProvider,
             child: ChatRoomScreen(chatId: chatId),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/evidence/:matchId',
+        builder: (context, state) {
+          final matchId = state.pathParameters['matchId']!;
+          final match = matchProvider.matches
+              .where((m) => m.id == matchId)
+              .firstOrNull;
+          if (match == null) return const SizedBox.shrink();
+          return ChangeNotifierProvider.value(
+            value: matchProvider,
+            child: EvidenceScreen(match: match),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/review/:matchId',
+        builder: (context, state) {
+          final matchId = state.pathParameters['matchId']!;
+          final match = matchProvider.matches
+              .where((m) => m.id == matchId)
+              .firstOrNull;
+          if (match == null) return const SizedBox.shrink();
+          return ChangeNotifierProvider.value(
+            value: matchProvider,
+            child: ReviewScreen(match: match),
           );
         },
       ),
