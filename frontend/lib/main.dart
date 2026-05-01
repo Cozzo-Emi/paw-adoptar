@@ -16,13 +16,24 @@ void main() {
   final authService = AuthService(client: apiClient, storage: secureStorage);
   final authProvider = AuthProvider(authService: authService);
 
-  runApp(PawApp(authProvider: authProvider));
+  runApp(PawApp(
+    authProvider: authProvider,
+    apiClient: apiClient,
+    secureStorage: secureStorage,
+  ));
 }
 
 class PawApp extends StatelessWidget {
   final AuthProvider authProvider;
+  final ApiClient apiClient;
+  final FlutterSecureStorage secureStorage;
 
-  const PawApp({super.key, required this.authProvider});
+  const PawApp({
+    super.key,
+    required this.authProvider,
+    required this.apiClient,
+    required this.secureStorage,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +43,11 @@ class PawApp extends StatelessWidget {
         title: 'PAW',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
-        routerConfig: buildRouter(authProvider),
+        routerConfig: buildRouter(
+          authProvider: authProvider,
+          apiClient: apiClient,
+          secureStorage: secureStorage,
+        ),
       ),
     );
   }
