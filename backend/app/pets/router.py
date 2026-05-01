@@ -98,20 +98,23 @@ async def list_pets(
     age_max: Optional[int] = Query(None, ge=0, description="Edad máxima en meses"),
     city: Optional[str] = None,
     province: Optional[str] = None,
+    donor_id: Optional[UUID] = Query(None, description="Filtrar por donante (muestra todos los estados)"),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """
-    Lista mascotas disponibles con filtros básicos.
-    Solo muestra mascotas con status 'available'.
+    Lista mascotas con filtros básicos.
+    Si no se especifica donor_id, solo muestra mascotas con status 'available'.
+    Si se especifica donor_id, muestra TODOS los estados de ese donante.
     """
-    stmt = (
-        select(Pet)
-        .where(Pet.status == PetStatus.AVAILABLE)
-        .options(selectinload(Pet.photos))
-    )
+    stmt = select(Pet).options(selectinload(Pet.photos))
+
+    if donor_id:
+        stmt = stmt.where(Pet.donor_id == donor_id)
+    else:
+        stmt = stmt.where(Pet.status == PetStatus.AVAILABLE)
 
     # Aplicar filtros
     if species:

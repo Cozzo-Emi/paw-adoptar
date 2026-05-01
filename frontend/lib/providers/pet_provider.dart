@@ -31,7 +31,7 @@ class PetProvider extends ChangeNotifier {
   int? get ageMinFilter => _ageMinFilter;
   int? get ageMaxFilter => _ageMaxFilter;
 
-  Future<void> loadPets({bool refresh = false}) async {
+  Future<void> loadPets({bool refresh = false, String? donorId}) async {
     if (_isLoading) return;
 
     if (refresh) {
@@ -49,6 +49,7 @@ class PetProvider extends ChangeNotifier {
         size: _sizeFilter,
         ageMin: _ageMinFilter,
         ageMax: _ageMaxFilter,
+        donorId: donorId,
         offset: _pets.length,
       );
 

@@ -13,6 +13,7 @@ class PetService {
     int? ageMax,
     String? city,
     String? province,
+    String? donorId,
     int limit = 20,
     int offset = 0,
   }) async {
@@ -29,6 +30,7 @@ class PetService {
     if (province != null && province.isNotEmpty) {
       queryParams['province'] = province;
     }
+    if (donorId != null) queryParams['donor_id'] = donorId;
 
     final response = await _client.dio.get(
       '/pets',
