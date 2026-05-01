@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/pet.dart';
+import '../../providers/match_provider.dart';
 import '../../providers/pet_provider.dart';
 import '../../widgets/loading_overlay.dart';
 
@@ -64,9 +65,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    // TODO: Fase 4 - POST /matches
-                  },
+                  onPressed: () => _expressInterest(pet),
                   icon: const Icon(Icons.favorite),
                   label: const Text('Expresar Interés'),
                 ),
@@ -275,6 +274,28 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
         return 'Alta';
       default:
         return level;
+    }
+  }
+
+  void _expressInterest(Pet pet) async {
+    final matchProvider = context.read<MatchProvider>();
+    final success = await matchProvider.createMatch(petId: pet.id);
+
+    if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Interés expresado por ${pet.name}'),
+          backgroundColor: const Color(0xFF28A745),
+        ),
+      );
+      context.go('/matches');
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(matchProvider.error ?? 'Error al expresar interés'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
     }
   }
 }
