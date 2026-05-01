@@ -1,0 +1,29 @@
+# Core
+fastapi==0.115.12
+uvicorn[standard]==0.34.2
+pydantic[email]==2.11.3
+pydantic-settings==2.9.1
+
+# Database
+sqlalchemy[asyncio]==2.0.40
+asyncpg==0.30.0
+alembic==1.15.2
+
+# Auth
+python-jose[cryptography]==3.4.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.20
+
+# Media & Services
+cloudinary==1.41.0
+firebase-admin==6.5.0
+
+# HTTP client (para llamadas externas)
+httpx==0.28.1
+
+# Testing
+pytest==8.3.5
+pytest-asyncio==0.26.0
+
+# Utils
+python-dotenv==1.1.0
