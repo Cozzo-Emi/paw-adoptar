@@ -102,32 +102,38 @@ class PetCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            pet.ageFormatted,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
+                        if (pet.compatibilityScore != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withValues(alpha: 0.8),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '${(pet.compatibilityScore! * 100).round()}%',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
                             ),
                           ),
-                        ),
                       ],
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      '${pet.speciesLabel} · ${pet.sexLabel}',
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          '${pet.speciesLabel} · ${pet.sexLabel} · ${pet.ageFormatted}',
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
                     ),
                     if (pet.city != null)
                       Text(

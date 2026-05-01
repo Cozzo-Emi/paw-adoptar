@@ -12,11 +12,12 @@ from sqlalchemy.orm import selectinload
 
 from app.auth.dependencies import get_current_user
 from app.core.firebase import notify_new_match, notify_match_accepted
+from app.core.matching import calculate_compatibility
 from app.database import get_db
 from app.matching.models import Match, MatchStatus, PostAdoptionEvidence
 from app.matching.schemas import MatchCreate, MatchRead, PostAdoptionEvidenceCreate, PostAdoptionEvidenceRead
 from app.pets.models import Pet, PetStatus
-from app.users.models import User
+from app.users.models import AdopterProfile, User
 
 router = APIRouter(prefix="/matches", tags=["Matching"])
 
@@ -84,6 +85,22 @@ async def create_match(
         adopter_message=match_in.adopter_message,
         status=MatchStatus.PENDING,
     )
+
+    # Calculate and store compatibility score
+    adopter_stmt = select(AdopterProfile).where(
+        AdopterProfile.user_id == current_user.id
+    )
+    adopter_result = await db.execute(adopter_stmt)
+    adopter_profile = adopter_result.scalar_one_or_none()
+
+    donor_stmt = select(User).where(User.id == pet.donor_id)
+    donor_result = await db.execute(donor_stmt)
+    donor = donor_result.scalar_one()
+
+    db_match.compatibility_score = calculate_compatibility(
+        adopter_profile, current_user, pet, donor
+    )
+
     db.add(db_match)
     await db.commit()
     await db.refresh(db_match)
@@ -299,3 +316,59 @@ async def submit_evidence(
     await db.refresh(db_evidence)
     
     return db_evidence
+
+
+@router.post("/send-reminders", response_model=dict)
+async def send_post_adoption_reminders(
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Envía recordatorios a adoptantes que no han subido evidencia
+    después de 48 horas de haber sido aceptado el match.
+    Este endpoint está diseñado para ser llamado por un cron job.
+    """
+    from datetime import datetime, timedelta, timezone
+    from app.core.firebase import send_push_notification
+
+    now = datetime.now(timezone.utc)
+    reminder_start = now - timedelta(hours=72)
+    reminder_end = now - timedelta(hours=48)
+
+    # Find matches in ACCEPTED status, matched 48-72h ago
+    stmt = (
+        select(Match)
+        .where(
+            Match.status == MatchStatus.ACCEPTED,
+            Match.matched_at >= reminder_start,
+            Match.matched_at <= reminder_end,
+        )
+        .options(selectinload(Match.evidence))
+    )
+    result = await db.execute(stmt)
+    matches = result.scalars().all()
+
+    sent = 0
+    for match in matches:
+        # Skip if already has evidence
+        if match.evidence:
+            continue
+
+        # Send push notification to adopter
+        adopter_stmt = select(User).where(User.id == match.adopter_id)
+        adopter_result = await db.execute(adopter_stmt)
+        adopter = adopter_result.scalar_one_or_none()
+
+        pet_stmt = select(Pet).where(Pet.id == match.pet_id)
+        pet_result = await db.execute(pet_stmt)
+        pet = pet_result.scalar_one_or_none()
+
+        if adopter and adopter.fcm_token and pet:
+            send_push_notification(
+                token=adopter.fcm_token,
+                title="¿Cómo está tu mascota? 🐾",
+                body=f"Subí una foto de {pet.name} para confirmar su bienestar y sumar puntos.",
+                data={"type": "post_adoption_reminder", "match_id": str(match.id)},
+            )
+            sent += 1
+
+    return {"sent": sent, "checked": len(matches)}

@@ -28,6 +28,7 @@ class Pet {
   final DateTime createdAt;
   final DateTime updatedAt;
   final List<PetPhoto> photos;
+  final double? compatibilityScore;
 
   const Pet({
     required this.id,
@@ -59,6 +60,7 @@ class Pet {
     required this.createdAt,
     required this.updatedAt,
     this.photos = const [],
+    this.compatibilityScore,
   });
 
   String get coverImage =>
@@ -114,6 +116,7 @@ class Pet {
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
       photos: photosList,
+      compatibilityScore: (json['compatibility_score'] as num?)?.toDouble(),
     );
   }
 }

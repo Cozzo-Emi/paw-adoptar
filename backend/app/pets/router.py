@@ -14,10 +14,11 @@ from sqlalchemy.orm import selectinload
 
 from app.auth.dependencies import get_current_user
 from app.core.cloudinary_utils import generate_signed_upload_params
+from app.core.matching import calculate_compatibility
 from app.database import get_db
 from app.pets.models import Pet, PetPhoto, PetStatus, Species, PetSize
 from app.pets.schemas import PetCreate, PetPhotoCreate, PetPhotoRead, PetRead
-from app.users.models import User
+from app.users.models import AdopterProfile, User
 
 router = APIRouter(prefix="/pets", tags=["Pets"])
 
@@ -133,7 +134,30 @@ async def list_pets(
     stmt = stmt.order_by(Pet.created_at.desc()).offset(offset).limit(limit)
 
     result = await db.execute(stmt)
-    return result.scalars().all()
+    pets = result.scalars().all()
+
+    # Calculate compatibility for adopters viewing the feed
+    enriched = []
+    if not donor_id and current_user.role.value in ("adopter", "both", "admin"):
+        profile_stmt = select(AdopterProfile).where(
+            AdopterProfile.user_id == current_user.id
+        )
+        profile_result = await db.execute(profile_stmt)
+        adopter_profile = profile_result.scalar_one_or_none()
+
+        for pet in pets:
+            donor_stmt = select(User).where(User.id == pet.donor_id)
+            donor_result = await db.execute(donor_stmt)
+            donor = donor_result.scalar_one_or_none()
+
+            pet_data = PetRead.model_validate(pet)
+            pet_data.compatibility_score = calculate_compatibility(
+                adopter_profile, current_user, pet, donor
+            )
+            enriched.append(pet_data)
+        return enriched
+
+    return [PetRead.model_validate(p) for p in pets]
 
 
 @router.get("/{pet_id}", response_model=PetRead)

@@ -66,3 +66,4 @@ class PetRead(PetBase):
     created_at: datetime
     updated_at: datetime
     photos: List[PetPhotoRead]
+    compatibility_score: Optional[float] = None
