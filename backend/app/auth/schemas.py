@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class BaseSchema(BaseModel):
@@ -13,3 +13,8 @@ class Token(BaseSchema):
 
 class TokenPayload(BaseSchema):
     sub: str | None = None
+    type: str | None = None
+
+
+class RefreshTokenRequest(BaseSchema):
+    refresh_token: str = Field(..., min_length=1)
