@@ -54,10 +54,14 @@ class AuthService {
     return User.fromJson(response.data as Map<String, dynamic>);
   }
 
-  Future<User> updateRole(String userId, String role) async {
+  Future<User> updateProfile({String? role, String? city, String? province}) async {
     final response = await _client.dio.put(
-      '/users/$userId',
-      data: {'role': role},
+      '/users/me',
+      data: {
+        if (role != null) 'role': role,
+        if (city != null) 'city': city,
+        if (province != null) 'province': province,
+      },
     );
     return User.fromJson(response.data as Map<String, dynamic>);
   }

@@ -48,6 +48,15 @@ class UserRead(UserBase):
 class FCMTokenUpdate(BaseSchema):
     token: str = Field(..., max_length=255)
 
+
+class UserUpdate(BaseSchema):
+    role: Optional[UserRole] = None
+    city: Optional[str] = Field(None, max_length=100)
+    province: Optional[str] = Field(None, max_length=100)
+    avatar_url: Optional[str] = Field(None, max_length=500)
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+
 # ─── Perfil Adoptante ────────────────────────────────────
 
 class AdopterProfileBase(BaseSchema):

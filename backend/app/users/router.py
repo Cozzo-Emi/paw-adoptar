@@ -20,6 +20,7 @@ from app.users.schemas import (
     DonorProfileRead,
     FCMTokenUpdate,
     UserRead,
+    UserUpdate,
 )
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -109,6 +110,34 @@ async def get_user_by_id(
         )
 
     return user
+
+@router.put("/me", response_model=UserRead)
+async def update_my_user(
+    user_in: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Actualiza campos editables del usuario actual: rol, ciudad, provincia,
+    avatar_url y coordenadas. No permite modificar email, contraseña ni
+    campos de seguridad (se manejan en endpoints dedicados).
+    """
+    update_data = user_in.model_dump(exclude_unset=True)
+    if not update_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No fields to update.",
+        )
+
+    for key, value in update_data.items():
+        setattr(current_user, key, value)
+
+    db.add(current_user)
+    await db.commit()
+    await db.refresh(current_user)
+
+    return current_user
+
 
 @router.post("/me/fcm-token", response_model=dict)
 async def update_fcm_token(
