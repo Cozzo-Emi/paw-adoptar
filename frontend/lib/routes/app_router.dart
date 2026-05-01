@@ -11,6 +11,8 @@ import '../screens/auth/role_selection_screen.dart';
 import '../screens/splash/splash_screen.dart';
 import '../screens/feed/pet_feed_screen.dart';
 import '../screens/feed/pet_detail_screen.dart';
+import '../screens/donor/donor_dashboard_screen.dart';
+import '../screens/donor/pet_creation_screen.dart';
 import '../services/api_client.dart';
 import '../services/pet_service.dart';
 
@@ -79,6 +81,14 @@ GoRouter buildRouter({
             child: PetDetailScreen(petId: petId),
           );
         },
+      ),
+      GoRoute(
+        path: '/donor',
+        builder: (context, state) => const DonorDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/donor/publish',
+        builder: (context, state) => const PetCreationScreen(),
       ),
     ],
   );

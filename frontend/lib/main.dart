@@ -37,8 +37,10 @@ class PawApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: authProvider,
+  return ChangeNotifierProvider.value(
+    value: authProvider,
+    child: Provider<ApiClient>.value(
+      value: apiClient,
       child: MaterialApp.router(
         title: 'PAW',
         debugShowCheckedModeBanner: false,
@@ -49,6 +51,7 @@ class PawApp extends StatelessWidget {
           secureStorage: secureStorage,
         ),
       ),
-    );
+    ),
+  );
   }
 }
