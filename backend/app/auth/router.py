@@ -3,7 +3,7 @@ PAW — Auth Router
 Endpoints para registro, login y refresh de tokens.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from sqlalchemy import select
@@ -18,6 +18,7 @@ from app.core.security import (
     verify_password,
 )
 from app.database import get_db
+from app.main import get_rate_limit, limiter
 from app.users.models import User
 from app.users.schemas import UserCreate, UserRead
 
@@ -26,7 +27,8 @@ settings = get_settings()
 
 
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
-async def register_user(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
+@limiter.limit(get_rate_limit("5/minute"))
+async def register_user(user_in: UserCreate, request: Request, db: AsyncSession = Depends(get_db)):
     """
     Registra un nuevo usuario en la plataforma.
     Valida que el email no esté ya registrado.
@@ -70,7 +72,9 @@ async def register_user(user_in: UserCreate, db: AsyncSession = Depends(get_db))
 
 
 @router.post("/login", response_model=Token)
+@limiter.limit(get_rate_limit("10/minute"))
 async def login_access_token(
+    request: Request,
     db: AsyncSession = Depends(get_db),
     form_data: OAuth2PasswordRequestForm = Depends()
 ):
@@ -100,8 +104,10 @@ async def login_access_token(
 
 
 @router.post("/refresh", response_model=Token)
+@limiter.limit(get_rate_limit("10/minute"))
 async def refresh_access_token(
     body: RefreshTokenRequest,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ):
     """

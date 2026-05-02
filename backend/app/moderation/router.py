@@ -3,17 +3,24 @@ PAW — Moderation Router
 Endpoints para reportes de fraude y reviews post-adopción.
 """
 
-from uuid import UUID
+from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from app.auth.dependencies import get_current_user
+from app.auth.dependencies import get_current_active_moderator, get_current_user
 from app.database import get_db
 from app.matching.models import Match, MatchStatus
 from app.moderation.models import Report, ReportStatus, Review
-from app.moderation.schemas import ReportCreate, ReportRead, ReviewCreate, ReviewRead
+from app.moderation.schemas import (
+    ReportCreate,
+    ReportRead,
+    ReportUpdate,
+    ReviewCreate,
+    ReviewRead,
+)
 from app.pets.models import Pet
 from app.users.models import User
 
@@ -131,3 +138,90 @@ async def create_review(
     await db.refresh(db_review)
 
     return db_review
+
+
+@router.get("/reports", response_model=list[ReportRead])
+async def list_reports(
+    status_filter: Optional[ReportStatus] = Query(None, alias="status"),
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    current_moderator: User = Depends(get_current_active_moderator),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Lista reportes. Solo accesible por moderadores y admins.
+    Filtra por status opcionalmente.
+    """
+    stmt = select(Report).options(
+        selectinload(Report.reporter),
+        selectinload(Report.reported_user),
+    )
+
+    if status_filter:
+        stmt = stmt.where(Report.status == status_filter)
+
+    stmt = stmt.order_by(Report.created_at.desc()).offset(offset).limit(limit)
+
+    result = await db.execute(stmt)
+    return result.scalars().all()
+
+
+@router.get("/reports/{report_id}", response_model=ReportRead)
+async def get_report(
+    report_id,
+    current_moderator: User = Depends(get_current_active_moderator),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Obtiene detalle de un reporte específico.
+    """
+    from uuid import UUID
+
+    stmt = (
+        select(Report)
+        .where(Report.id == UUID(report_id))
+        .options(selectinload(Report.reporter), selectinload(Report.reported_user))
+    )
+    result = await db.execute(stmt)
+    report = result.scalar_one_or_none()
+
+    if not report:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found")
+
+    return report
+
+
+@router.put("/reports/{report_id}", response_model=ReportRead)
+async def update_report(
+    report_id,
+    update: ReportUpdate,
+    current_moderator: User = Depends(get_current_active_moderator),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Actualiza el estado de un reporte (resolver/descartar/revisar).
+    Solo accesible por moderadores y admins.
+    """
+    from uuid import UUID
+    from datetime import datetime, timezone
+
+    stmt = select(Report).where(Report.id == UUID(report_id))
+    result = await db.execute(stmt)
+    report = result.scalar_one_or_none()
+
+    if not report:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found")
+
+    report.status = update.status
+    report.moderator_id = current_moderator.id
+
+    if update.resolution_notes:
+        report.resolution_notes = update.resolution_notes
+
+    if update.status in (ReportStatus.RESOLVED, ReportStatus.DISMISSED):
+        report.resolved_at = datetime.now(timezone.utc)
+
+    await db.commit()
+    await db.refresh(report)
+
+    return report

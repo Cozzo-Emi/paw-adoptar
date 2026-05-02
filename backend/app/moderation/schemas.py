@@ -29,6 +29,11 @@ class ReportRead(ReportBase):
     created_at: datetime
     resolved_at: Optional[datetime]
 
+
+class ReportUpdate(BaseSchema):
+    status: ReportStatus
+    resolution_notes: Optional[str] = None
+
 # ─── Review / Valoración ─────────────────────────────────
 
 class ReviewBase(BaseSchema):

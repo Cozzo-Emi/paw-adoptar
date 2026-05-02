@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/auth_provider.dart';
 
 class ScaffoldWithNavBar extends StatelessWidget {
   final Widget child;
@@ -11,6 +14,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
     if (location.startsWith('/matches')) return 1;
     if (location.startsWith('/chats')) return 2;
     if (location.startsWith('/donor')) return 3;
+    if (location.startsWith('/moderation')) return 4;
     return 0;
   }
 
@@ -24,40 +28,52 @@ class ScaffoldWithNavBar extends StatelessWidget {
         context.go('/chats');
       case 3:
         context.go('/donor');
+      case 4:
+        context.go('/moderation');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final currentIndex = _currentIndex(context);
+    final user = context.watch<AuthProvider>().user;
+    final isModerator = user?.role == 'moderator' || user?.role == 'admin';
+
+    final destinations = <NavigationDestination>[
+      const NavigationDestination(
+        icon: Icon(Icons.pets_outlined),
+        selectedIcon: Icon(Icons.pets),
+        label: 'Explorar',
+      ),
+      const NavigationDestination(
+        icon: Icon(Icons.favorite_outline),
+        selectedIcon: Icon(Icons.favorite),
+        label: 'Matches',
+      ),
+      const NavigationDestination(
+        icon: Icon(Icons.chat_bubble_outline),
+        selectedIcon: Icon(Icons.chat_bubble),
+        label: 'Chats',
+      ),
+      const NavigationDestination(
+        icon: Icon(Icons.person_outline),
+        selectedIcon: Icon(Icons.person),
+        label: 'Donante',
+      ),
+      if (isModerator)
+        const NavigationDestination(
+          icon: Icon(Icons.shield_outlined),
+          selectedIcon: Icon(Icons.shield),
+          label: 'Moderar',
+        ),
+    ];
 
     return Scaffold(
       body: child,
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentIndex,
         onDestinationSelected: (index) => _onTabTap(context, index),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.pets_outlined),
-            selectedIcon: Icon(Icons.pets),
-            label: 'Explorar',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.favorite_outline),
-            selectedIcon: Icon(Icons.favorite),
-            label: 'Matches',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.chat_bubble_outline),
-            selectedIcon: Icon(Icons.chat_bubble),
-            label: 'Chats',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Donante',
-          ),
-        ],
+        destinations: destinations,
       ),
     );
   }

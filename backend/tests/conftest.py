@@ -1,3 +1,7 @@
+import os
+
+os.environ["APP_ENV"] = "testing"
+
 from typing import AsyncGenerator
 
 import pytest

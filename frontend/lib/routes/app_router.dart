@@ -20,6 +20,7 @@ import '../screens/matches/chat_list_screen.dart';
 import '../screens/matches/chat_room_screen.dart';
 import '../screens/post_adoption/evidence_screen.dart';
 import '../screens/post_adoption/review_screen.dart';
+import '../screens/moderation/moderation_screen.dart';
 import '../services/api_client.dart';
 import '../services/chat_service.dart';
 import '../services/match_service.dart';
@@ -174,6 +175,10 @@ GoRouter buildRouter({
                 child: ReviewScreen(match: match),
               );
             },
+          ),
+          GoRoute(
+            path: '/moderation',
+            builder: (context, state) => const ModerationScreen(),
           ),
         ],
       ),

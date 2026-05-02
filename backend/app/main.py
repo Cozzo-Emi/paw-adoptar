@@ -1,16 +1,28 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from app.config import get_settings
 from app.database import engine
 
 settings = get_settings()
 
+limiter = Limiter(key_func=get_remote_address)
+
 app = FastAPI(
     title=settings.app_name,
     version="1.0.0",
     description="Backend para PAW - App de Adopción de Mascotas",
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
+def get_rate_limit(default: str) -> str:
+    return default if settings.app_env != "testing" else "1000/minute"
 
 # CORS configuration
 app.add_middleware(
@@ -21,14 +33,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/health", tags=["Health"])
 async def health_check():
-    """Health check endpoint to verify API status"""
     return {
         "status": "ok",
         "app_name": settings.app_name,
-        "environment": settings.app_env
+        "environment": settings.app_env,
     }
+
 
 from app.auth.router import router as auth_router
 from app.users.router import router as users_router

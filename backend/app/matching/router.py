@@ -5,7 +5,7 @@ Endpoints para expresar interés, aceptar/rechazar matches.
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Request, status, BackgroundTasks
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -14,6 +14,7 @@ from app.auth.dependencies import get_current_user
 from app.core.firebase import notify_new_match, notify_match_accepted
 from app.core.matching import calculate_compatibility
 from app.database import get_db
+from app.main import get_rate_limit, limiter
 from app.matching.models import Match, MatchStatus, PostAdoptionEvidence
 from app.matching.schemas import MatchCreate, MatchRead, PostAdoptionEvidenceCreate, PostAdoptionEvidenceRead
 from app.pets.models import Pet, PetStatus
@@ -23,8 +24,10 @@ router = APIRouter(prefix="/matches", tags=["Matching"])
 
 
 @router.post("", response_model=MatchRead, status_code=status.HTTP_201_CREATED)
+@limiter.limit(get_rate_limit("20/minute"))
 async def create_match(
     match_in: MatchCreate,
+    request: Request,
     background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
