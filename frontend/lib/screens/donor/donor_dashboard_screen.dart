@@ -22,7 +22,9 @@ class _DonorDashboardScreenState extends State<DonorDashboardScreen> {
     super.didChangeDependencies();
     if (!_initialized) {
       _initialized = true;
-      _loadData();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadData();
+      });
     }
   }
 
@@ -269,6 +271,11 @@ class _DonorPetTile extends StatelessWidget {
                 ),
               ),
             ),
+            if (pet.status == 'available')
+              IconButton(
+                icon: const Icon(Icons.edit, size: 20, color: Colors.grey),
+                onPressed: () => context.go('/donor/edit/${pet.id}'),
+              ),
           ],
         ),
       ),

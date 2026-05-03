@@ -2,6 +2,8 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 
+import 'package:http_parser/http_parser.dart';
+
 class CloudinaryService {
   Future<Map<String, dynamic>> uploadImageBytes({
     required Uint8List bytes,
@@ -13,7 +15,11 @@ class CloudinaryService {
         'https://api.cloudinary.com/v1_1/$cloudName/image/upload';
 
     final formData = FormData.fromMap({
-      'file': MultipartFile.fromBytes(bytes, filename: filename),
+      'file': MultipartFile.fromBytes(
+        bytes, 
+        filename: filename,
+        contentType: MediaType('image', 'jpeg'),
+      ),
       'api_key': signedParams['api_key'],
       'timestamp': signedParams['timestamp'].toString(),
       'signature': signedParams['signature'],
@@ -21,7 +27,13 @@ class CloudinaryService {
       'tags': (signedParams['tags'] as List).join(','),
     });
 
-    final response = await Dio().post(
+    final dio = Dio(BaseOptions(
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 30),
+      sendTimeout: const Duration(seconds: 30),
+    ));
+
+    final response = await dio.post(
       uploadUrl,
       data: formData,
     );

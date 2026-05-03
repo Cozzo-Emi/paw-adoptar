@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:dio/dio.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/match.dart';
@@ -92,6 +93,16 @@ class _EvidenceScreenState extends State<EvidenceScreen> {
             ),
           );
         }
+      }
+    } on DioException catch (e) {
+      if (mounted) {
+        String msg = e.message ?? e.toString();
+        if (e.response?.data != null) {
+          msg = 'Error del servidor: ${e.response!.data}';
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg)),
+        );
       }
     } catch (e) {
       if (mounted) {

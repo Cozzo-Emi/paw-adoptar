@@ -15,6 +15,7 @@ import '../screens/feed/pet_feed_screen.dart';
 import '../screens/feed/pet_detail_screen.dart';
 import '../screens/donor/donor_dashboard_screen.dart';
 import '../screens/donor/pet_creation_screen.dart';
+import '../screens/donor/pet_edit_screen.dart';
 import '../screens/matches/match_inbox_screen.dart';
 import '../screens/matches/chat_list_screen.dart';
 import '../screens/matches/chat_room_screen.dart';
@@ -122,6 +123,16 @@ GoRouter buildRouter({
               providers: shellProviders,
               child: const PetCreationScreen(),
             ),
+          ),
+          GoRoute(
+            path: '/donor/edit/:petId',
+            builder: (context, state) {
+              final petId = state.pathParameters['petId']!;
+              return MultiProvider(
+                providers: shellProviders,
+                child: PetEditScreen(petId: petId),
+              );
+            },
           ),
           GoRoute(
             path: '/matches',

@@ -103,4 +103,32 @@ class PetProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
   }
+
+  Future<bool> updatePet(String petId, Map<String, dynamic> updateData) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final updatedPet = await _petService.updatePet(petId, updateData);
+      
+      // Update in lists
+      final index = _pets.indexWhere((p) => p.id == petId);
+      if (index != -1) {
+        _pets[index] = updatedPet;
+      }
+      if (_selectedPet?.id == petId) {
+        _selectedPet = updatedPet;
+      }
+      
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = 'Error al actualizar la mascota.';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
 }
