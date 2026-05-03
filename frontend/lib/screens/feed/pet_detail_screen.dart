@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../models/pet.dart';
 import '../../providers/match_provider.dart';
 import '../../providers/pet_provider.dart';
+import '../../services/api_client.dart';
 import '../../widgets/loading_overlay.dart';
 
 class PetDetailScreen extends StatefulWidget {
@@ -53,6 +54,20 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
           ),
           onPressed: () => context.pop(),
         ),
+        actions: [
+          if (pet != null)
+            IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.black26,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.flag, color: Colors.white, size: 20),
+              ),
+              onPressed: () => _showReportDialog(pet!),
+            ),
+        ],
       ),
       body: LoadingOverlay(
         isLoading: provider.isLoading,
@@ -261,6 +276,69 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  void _showReportDialog(Pet pet) {
+    final reasonController = TextEditingController();
+    String selectedReason = 'inappropriate';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Reportar'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('¿Por qué querés reportar esta publicación?'),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: selectedReason,
+                items: const [
+                  DropdownMenuItem(value: 'inappropriate', child: Text('Contenido inapropiado')),
+                  DropdownMenuItem(value: 'fake_listing', child: Text('Publicación falsa')),
+                  DropdownMenuItem(value: 'fraud', child: Text('Fraude')),
+                  DropdownMenuItem(value: 'abuse', child: Text('Abuso')),
+                  DropdownMenuItem(value: 'other', child: Text('Otro')),
+                ],
+                onChanged: (v) => setDialogState(() => selectedReason = v!),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: reasonController,
+                decoration: const InputDecoration(
+                  labelText: 'Descripción',
+                  hintText: 'Explicá brevemente...',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+            ElevatedButton(
+              onPressed: () async {
+                try {
+                  await context.read<ApiClient>().dio.post('/moderation/reports', data: {
+                    'reported_pet_id': pet.id,
+                    'reason': selectedReason,
+                    'description': reasonController.text.trim().isEmpty ? 'Reporte' : reasonController.text.trim(),
+                  });
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Reporte enviado. Gracias.'), backgroundColor: Color(0xFF28A745)),
+                    );
+                  }
+                } catch (e) {
+                  if (ctx.mounted) Navigator.pop(ctx);
+                }
+              },
+              child: const Text('Enviar'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

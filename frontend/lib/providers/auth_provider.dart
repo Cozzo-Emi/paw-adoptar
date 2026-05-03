@@ -111,6 +111,11 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void forceUnauthenticated() {
+    _status = AuthStatus.unauthenticated;
+    notifyListeners();
+  }
+
   String _extractErrorMessage(dynamic error) {
     if (error is Exception) {
       final message = error.toString();

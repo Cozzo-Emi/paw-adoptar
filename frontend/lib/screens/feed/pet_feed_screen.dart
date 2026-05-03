@@ -63,9 +63,19 @@ class _PetFeedScreenState extends State<PetFeedScreen> {
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => context.read<AuthProvider>().logout(),
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              switch (value) {
+                case 'profile':
+                  context.go('/profile');
+                case 'logout':
+                  context.read<AuthProvider>().logout();
+              }
+            },
+            itemBuilder: (_) => [
+              const PopupMenuItem(value: 'profile', child: ListTile(leading: Icon(Icons.person), title: Text('Mi Perfil'), dense: true)),
+              const PopupMenuItem(value: 'logout', child: ListTile(leading: Icon(Icons.logout, color: Colors.red), title: Text('Cerrar Sesión'), dense: true)),
+            ],
           ),
         ],
       ),

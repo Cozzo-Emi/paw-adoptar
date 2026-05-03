@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../models/user.dart';
@@ -15,12 +16,13 @@ class AuthService {
     required String email,
     required String password,
   }) async {
+    // OAuth2PasswordRequestForm requires x-www-form-urlencoded
     final response = await _client.dio.post(
       '/auth/login',
-      data: {
+      data: FormData.fromMap({
         'username': email,
         'password': password,
-      },
+      }),
     );
 
     final token = AuthToken.fromJson(response.data as Map<String, dynamic>);
@@ -58,9 +60,9 @@ class AuthService {
     final response = await _client.dio.put(
       '/users/me',
       data: {
-        if (role != null) 'role': role,
-        if (city != null) 'city': city,
-        if (province != null) 'province': province,
+        'role': ?role,
+        'city': ?city,
+        'province': ?province,
       },
     );
     return User.fromJson(response.data as Map<String, dynamic>);

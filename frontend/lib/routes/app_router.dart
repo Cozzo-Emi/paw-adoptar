@@ -21,6 +21,8 @@ import '../screens/matches/chat_room_screen.dart';
 import '../screens/post_adoption/evidence_screen.dart';
 import '../screens/post_adoption/review_screen.dart';
 import '../screens/moderation/moderation_screen.dart';
+import '../screens/profile/profile_screen.dart';
+import '../screens/profile/adopter_profile_form.dart';
 import '../services/api_client.dart';
 import '../services/chat_service.dart';
 import '../services/match_service.dart';
@@ -96,7 +98,6 @@ GoRouter buildRouter({
           ),
           GoRoute(
             path: '/feed/:petId',
-            parentNavigatorKey: rootNavigatorKey,
             builder: (context, state) {
               final petId = state.pathParameters['petId']!;
               return MultiProvider(
@@ -114,7 +115,6 @@ GoRouter buildRouter({
           ),
           GoRoute(
             path: '/donor/publish',
-            parentNavigatorKey: rootNavigatorKey,
             builder: (context, state) => MultiProvider(
               providers: shellProviders,
               child: const PetCreationScreen(),
@@ -136,7 +136,6 @@ GoRouter buildRouter({
           ),
           GoRoute(
             path: '/chat/:chatId',
-            parentNavigatorKey: rootNavigatorKey,
             builder: (context, state) {
               final chatId = state.pathParameters['chatId']!;
               final otherName = state.uri.queryParameters['name'];
@@ -148,7 +147,6 @@ GoRouter buildRouter({
           ),
           GoRoute(
             path: '/evidence/:matchId',
-            parentNavigatorKey: rootNavigatorKey,
             builder: (context, state) {
               final matchId = state.pathParameters['matchId']!;
               final match = matchProvider.matches
@@ -163,7 +161,6 @@ GoRouter buildRouter({
           ),
           GoRoute(
             path: '/review/:matchId',
-            parentNavigatorKey: rootNavigatorKey,
             builder: (context, state) {
               final matchId = state.pathParameters['matchId']!;
               final match = matchProvider.matches
@@ -179,6 +176,14 @@ GoRouter buildRouter({
           GoRoute(
             path: '/moderation',
             builder: (context, state) => const ModerationScreen(),
+          ),
+          GoRoute(
+            path: '/profile',
+            builder: (context, state) => const ProfileScreen(),
+          ),
+          GoRoute(
+            path: '/profile/adopter',
+            builder: (context, state) => const AdopterProfileForm(),
           ),
         ],
       ),

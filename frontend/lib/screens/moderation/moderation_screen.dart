@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -37,15 +35,18 @@ class _ModerationScreenState extends State<ModerationScreen> {
       );
 
       final list = response.data as List<dynamic>;
+      if (!mounted) return;
       setState(() {
         _reports = list.cast<Map<String, dynamic>>();
       });
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: ${e.toString()}')),
       );
     }
 
+    if (!mounted) return;
     setState(() => _isLoading = false);
   }
 
@@ -58,6 +59,7 @@ class _ModerationScreenState extends State<ModerationScreen> {
       });
       _loadReports();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al actualizar: ${e.toString()}')),
       );

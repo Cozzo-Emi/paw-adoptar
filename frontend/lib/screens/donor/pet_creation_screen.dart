@@ -394,7 +394,7 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
-            value: _species,
+            initialValue: _species,
             decoration: const InputDecoration(labelText: 'Especie *'),
             items: const [
               DropdownMenuItem(value: 'dog', child: Text('Perro')),
@@ -413,7 +413,7 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
             children: [
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: _sex,
+                  initialValue: _sex,
                   decoration: const InputDecoration(labelText: 'Sexo *'),
                   items: const [
                     DropdownMenuItem(value: 'male', child: Text('Macho')),
@@ -425,7 +425,7 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: _size,
+                  initialValue: _size,
                   decoration: const InputDecoration(labelText: 'Tamaño *'),
                   items: const [
                     DropdownMenuItem(value: 'small', child: Text('Pequeño')),
@@ -505,7 +505,7 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
         ),
         const SizedBox(height: 16),
         DropdownButtonFormField<String>(
-          value: _energyLevel,
+          initialValue: _energyLevel,
           decoration: const InputDecoration(labelText: 'Nivel de energía'),
           items: const [
             DropdownMenuItem(value: 'low', child: Text('Baja')),

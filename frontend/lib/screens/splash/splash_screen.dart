@@ -14,11 +14,32 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _checkAuth();
+    _init();
   }
 
-  Future<void> _checkAuth() async {
-    await context.read<AuthProvider>().checkAuthStatus();
+  Future<void> _init() async {
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+
+    // Safety net: if checkAuthStatus hangs, force unauthenticated after 5s
+    Future.delayed(const Duration(seconds: 5), () {
+      if (!mounted) return;
+      final auth = context.read<AuthProvider>();
+      if (auth.status == AuthStatus.unknown) {
+        auth.forceUnauthenticated();
+      }
+    });
+
+    try {
+      await context
+          .read<AuthProvider>()
+          .checkAuthStatus()
+          .timeout(const Duration(seconds: 3));
+    } catch (_) {
+      // API not reachable, proceed to login
+      if (!mounted) return;
+      context.read<AuthProvider>().forceUnauthenticated();
+    }
   }
 
   @override
@@ -29,11 +50,7 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.pets,
-              size: 80,
-              color: Colors.white,
-            ),
+            const Icon(Icons.pets, size: 80, color: Colors.white),
             const SizedBox(height: 24),
             Text(
               'PAW',

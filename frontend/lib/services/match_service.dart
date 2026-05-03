@@ -69,7 +69,7 @@ class MatchService {
         'match_id': matchId,
         'reviewed_id': reviewedId,
         'rating': rating,
-        if (comment != null) 'comment': comment,
+        'comment': ?comment,
       },
     );
     return response.data as Map<String, dynamic>;

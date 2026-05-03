@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     app_name: str = "PAW"
     app_env: str = "development"
     debug: bool = True
-    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:8080"]
+    cors_origins: list[str] = ["*"]
 
     # --- Base de datos ---
     postgres_user: str = "paw_user"

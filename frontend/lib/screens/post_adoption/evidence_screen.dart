@@ -58,6 +58,7 @@ class _EvidenceScreenState extends State<EvidenceScreen> {
 
     try {
       final apiClient = context.read<ApiClient>();
+      final matchProvider = context.read<MatchProvider>();
       final cloudinaryService = CloudinaryService();
       final petService = PetService(client: apiClient);
 
@@ -67,7 +68,6 @@ class _EvidenceScreenState extends State<EvidenceScreen> {
         signedParams: signedParams,
       );
 
-      final matchProvider = context.read<MatchProvider>();
       final success = await matchProvider.submitEvidence(
         matchId: widget.match.id,
         photoUrl: uploadResult['cloudinary_url'] as String,
