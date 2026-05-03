@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../config/constants.dart';
@@ -10,15 +9,10 @@ import 'api_client.dart';
 
 class ChatService {
   final ApiClient _client;
-  final FlutterSecureStorage _storage;
   WebSocketChannel? _channel;
   StreamController<Message>? _messageController;
 
-  ChatService({
-    required ApiClient client,
-    required FlutterSecureStorage storage,
-  })  : _client = client,
-        _storage = storage;
+  ChatService({required ApiClient client}) : _client = client;
 
   Future<Chat> createChat(String matchId) async {
     final response = await _client.dio.post(
@@ -50,15 +44,14 @@ class ChatService {
 
   Stream<Message> connectToChat(String chatId) {
     _messageController = StreamController<Message>.broadcast();
-
     _initWebSocket(chatId);
-
     return _messageController!.stream;
   }
 
-  Future<void> _initWebSocket(String chatId) async {
-    final token = await _storage.read(key: 'access_token');
-    if (token == null) return;
+  void _initWebSocket(String chatId) {
+    // Use the access token from the ApiClient's Dio instance
+    final token = _client.dio.options.headers['Authorization']?.toString().replaceFirst('Bearer ', '');
+    if (token == null || token.isEmpty) return;
 
     final base = AppConstants.apiBaseUrl;
     final wsBase = base.startsWith('https') ? base.replaceFirst('https', 'wss') : base.replaceFirst('http', 'ws');

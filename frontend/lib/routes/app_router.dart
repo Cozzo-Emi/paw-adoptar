@@ -42,7 +42,7 @@ GoRouter buildRouter({
   final matchService = MatchService(client: apiClient);
   final matchProvider = MatchProvider(matchService: matchService);
 
-  final chatService = ChatService(client: apiClient, storage: secureStorage);
+  final chatService = ChatService(client: apiClient);
   final chatProvider = ChatProvider(chatService: chatService);
 
   final shellProviders = [
