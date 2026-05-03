@@ -39,6 +39,13 @@ class _FilterModalState extends State<FilterModal> {
   }
 
   void _apply() {
+    // Validate age range
+    if (_ageMin != null && _ageMax != null && _ageMin! > _ageMax!) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('La edad mínima no puede ser mayor que la máxima')),
+      );
+      return;
+    }
     context.read<PetProvider>().applyFilters(
           species: _species,
           size: _size,

@@ -109,7 +109,7 @@ class PetCard extends StatelessWidget {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.green.withValues(alpha: 0.8),
+                              color: _scoreColor(pet.compatibilityScore!),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -160,5 +160,11 @@ class PetCard extends StatelessWidget {
         child: Icon(Icons.pets, size: 64, color: Colors.grey),
       ),
     );
+  }
+
+  Color _scoreColor(double score) {
+    if (score >= 0.7) return Colors.green;
+    if (score >= 0.4) return Colors.orange;
+    return Colors.red;
   }
 }

@@ -144,10 +144,10 @@ class PetPhoto {
     return PetPhoto(
       id: json['id'] as String,
       petId: json['pet_id'] as String,
-      cloudinaryUrl: json['cloudinary_url'] as String,
-      cloudinaryPublicId: json['cloudinary_public_id'] as String,
-      isPrimary: json['is_primary'] as bool,
-      order: json['order'] as int,
+      cloudinaryUrl: json['cloudinary_url'] as String? ?? '',
+      cloudinaryPublicId: json['cloudinary_public_id'] as String? ?? '',
+      isPrimary: json['is_primary'] as bool? ?? false,
+      order: json['order'] as int? ?? 0,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }

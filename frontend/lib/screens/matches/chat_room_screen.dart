@@ -26,8 +26,20 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     final userId = context.read<AuthProvider>().user?.id ?? '';
     _currentUserId = userId;
 
-    provider.loadChatHistory(widget.chatId);
+    // Load history first, then connect WebSocket to avoid race condition
+    _initChat();
+  }
+
+  Future<void> _initChat() async {
+    final provider = context.read<ChatProvider>();
+    await provider.loadChatHistory(widget.chatId);
     provider.connectToChat(widget.chatId);
+    // Auto-scroll to bottom after loading history
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      }
+    });
   }
 
   @override

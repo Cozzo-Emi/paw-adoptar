@@ -8,6 +8,7 @@ class ApiClient {
   late final Dio _dio;
   final TokenStorage _storage;
   bool _isRefreshing = false;
+  String? _lastToken;
 
   ApiClient({required TokenStorage storage}) : _storage = storage {
     _dio = Dio(
@@ -28,6 +29,7 @@ class ApiClient {
   }
 
   Dio get dio => _dio;
+  String? get lastToken => _lastToken;
 
   Future<void> _onRequest(
     RequestOptions options,
@@ -35,6 +37,7 @@ class ApiClient {
   ) async {
     final accessToken = await _storage.read(key: 'access_token');
     if (accessToken != null) {
+      _lastToken = accessToken;
       options.headers['Authorization'] = 'Bearer $accessToken';
     }
     handler.next(options);

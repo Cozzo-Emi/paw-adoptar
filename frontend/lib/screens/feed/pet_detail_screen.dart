@@ -20,6 +20,7 @@ class PetDetailScreen extends StatefulWidget {
 class _PetDetailScreenState extends State<PetDetailScreen> {
   final _pageController = PageController();
   int _currentPhotoIndex = 0;
+  bool _isExpressing = false;
 
   @override
   void initState() {
@@ -80,9 +81,11 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: ElevatedButton.icon(
-                  onPressed: () => _expressInterest(pet),
-                  icon: const Icon(Icons.favorite),
-                  label: const Text('Expresar Interés'),
+                  onPressed: _isExpressing ? null : () => _expressInterest(pet),
+                  icon: _isExpressing
+                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Icon(Icons.favorite),
+                  label: Text(_isExpressing ? 'Enviando...' : 'Expresar Interés'),
                 ),
               ),
             )
@@ -359,22 +362,23 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
 
   void _expressInterest(Pet pet) async {
     final matchProvider = context.read<MatchProvider>();
+    setState(() => _isExpressing = true);
     final success = await matchProvider.createMatch(petId: pet.id);
 
-    if (success && mounted) {
+    if (!mounted) return;
+    setState(() => _isExpressing = false);
+
+    if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Interés expresado por ${pet.name}'),
-          backgroundColor: const Color(0xFF28A745),
-        ),
+        SnackBar(content: Text('Interés expresado por ${pet.name}'), backgroundColor: const Color(0xFF28A745)),
       );
-      context.go('/matches');
-    } else if (mounted) {
+      // Navigate after a short delay so the snackbar is visible
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) context.go('/matches');
+      });
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(matchProvider.error ?? 'Error al expresar interés'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
+        SnackBar(content: Text(matchProvider.error ?? 'Error al expresar interés'), backgroundColor: Theme.of(context).colorScheme.error),
       );
     }
   }

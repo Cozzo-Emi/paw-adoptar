@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../config/constants.dart';
@@ -49,28 +50,37 @@ class ChatService {
   }
 
   void _initWebSocket(String chatId) {
-    // Use the access token from the ApiClient's Dio instance
-    final token = _client.dio.options.headers['Authorization']?.toString().replaceFirst('Bearer ', '');
-    if (token == null || token.isEmpty) return;
+    final token = _client.lastToken;
+    if (token == null || token.isEmpty) {
+      debugPrint('[ChatService] No token available for WebSocket');
+      return;
+    }
 
     final base = AppConstants.apiBaseUrl;
     final wsBase = base.startsWith('https') ? base.replaceFirst('https', 'wss') : base.replaceFirst('http', 'ws');
     final wsUrl = Uri.parse('$wsBase/chats/$chatId/ws?token=$token');
 
+    debugPrint('[ChatService] Connecting to $wsBase/chats/$chatId/ws');
     _channel = WebSocketChannel.connect(wsUrl);
 
     _channel!.stream.listen(
       (data) {
         if (_messageController == null || _messageController!.isClosed) return;
-        final json = jsonDecode(data as String) as Map<String, dynamic>;
-        _messageController!.add(Message.fromJson(json));
+        try {
+          final json = jsonDecode(data as String) as Map<String, dynamic>;
+          _messageController!.add(Message.fromJson(json));
+        } catch (e) {
+          debugPrint('[ChatService] Error parsing message: $e');
+        }
       },
       onError: (error) {
+        debugPrint('[ChatService] WebSocket error: $error');
         if (_messageController != null && !_messageController!.isClosed) {
           _messageController!.addError(error);
         }
       },
       onDone: () {
+        debugPrint('[ChatService] WebSocket closed');
         if (_messageController != null && !_messageController!.isClosed) {
           _messageController!.close();
         }

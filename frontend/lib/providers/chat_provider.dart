@@ -65,7 +65,7 @@ class ChatProvider extends ChangeNotifier {
 
   void connectToChat(String chatId) {
     _messageSubscription?.cancel();
-    _messages = [];
+    // Don't clear messages here — history is already loaded
 
     _messageSubscription = _chatService.connectToChat(chatId).listen(
       (message) {
