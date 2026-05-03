@@ -15,10 +15,8 @@ class AppConstants {
   static String get apiBaseUrl {
     if (_envUrl.isNotEmpty) return _envUrl;
 
-    if (isAndroidPlatform) {
-      return 'http://10.0.2.2:8000';
-    }
-    return 'http://localhost:8000';
+    // Apuntar siempre a producción por defecto
+    return 'https://paw-adoptar-production.up.railway.app';
   }
 
   static const Duration accessTokenExpiry = Duration(minutes: 30);
