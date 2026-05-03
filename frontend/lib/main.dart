@@ -18,9 +18,9 @@ void main() async {
   final authProvider = AuthProvider(authService: authService);
 
   try {
-    await FCMService.initialize();
+    await FCMService.initialize().timeout(const Duration(seconds: 5));
   } catch (_) {
-    // Firebase no configurado — modo sin push
+    // Firebase no configurado o timeout — modo sin push
   }
 
   runApp(PawApp(

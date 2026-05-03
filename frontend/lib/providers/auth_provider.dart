@@ -26,7 +26,9 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _status == AuthStatus.authenticated;
 
   Future<void> checkAuthStatus() async {
+    debugPrint('[AuthProvider] checkAuthStatus started');
     final isValid = await _authService.hasValidSession();
+    debugPrint('[AuthProvider] hasValidSession => $isValid');
 
     if (isValid) {
       _user = await _authService.fetchCurrentUser();
@@ -35,6 +37,7 @@ class AuthProvider extends ChangeNotifier {
       _status = AuthStatus.unauthenticated;
     }
 
+    debugPrint('[AuthProvider] status => $_status, notifying listeners...');
     notifyListeners();
   }
 

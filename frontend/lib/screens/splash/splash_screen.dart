@@ -18,27 +18,26 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _init() async {
+    // Brief pause so the splash is visible
     await Future.delayed(const Duration(seconds: 2));
+
     if (!mounted) return;
 
-    // Safety net: if checkAuthStatus hangs, force unauthenticated after 5s
-    Future.delayed(const Duration(seconds: 5), () {
-      if (!mounted) return;
-      final auth = context.read<AuthProvider>();
-      if (auth.status == AuthStatus.unknown) {
-        auth.forceUnauthenticated();
-      }
-    });
+    final authProvider = context.read<AuthProvider>();
 
     try {
-      await context
-          .read<AuthProvider>()
+      await authProvider
           .checkAuthStatus()
-          .timeout(const Duration(seconds: 3));
-    } catch (_) {
-      // API not reachable, proceed to login
-      if (!mounted) return;
-      context.read<AuthProvider>().forceUnauthenticated();
+          .timeout(const Duration(seconds: 5));
+    } catch (e) {
+      debugPrint('[Splash] Auth check failed or timed out: $e');
+    }
+
+    // If status is still unknown after the check, force unauthenticated
+    // so the router redirects to /login instead of looping back here.
+    if (mounted && authProvider.status == AuthStatus.unknown) {
+      debugPrint('[Splash] Forcing unauthenticated after timeout');
+      authProvider.forceUnauthenticated();
     }
   }
 

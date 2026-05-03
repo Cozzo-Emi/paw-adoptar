@@ -65,7 +65,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                 ),
                 child: const Icon(Icons.flag, color: Colors.white, size: 20),
               ),
-              onPressed: () => _showReportDialog(pet!),
+              onPressed: () => _showReportDialog(pet),
             ),
         ],
       ),
@@ -294,7 +294,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
               const Text('¿Por qué querés reportar esta publicación?'),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: selectedReason,
+                initialValue: selectedReason,
                 items: const [
                   DropdownMenuItem(value: 'inappropriate', child: Text('Contenido inapropiado')),
                   DropdownMenuItem(value: 'fake_listing', child: Text('Publicación falsa')),

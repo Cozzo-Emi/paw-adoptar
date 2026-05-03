@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../providers/auth_provider.dart';
+
 import '../../services/api_client.dart';
 
 class AdopterProfileForm extends StatefulWidget {
@@ -14,7 +14,7 @@ class AdopterProfileForm extends StatefulWidget {
 
 class _AdopterProfileFormState extends State<AdopterProfileForm> {
   final _formKey = GlobalKey<FormState>();
-  bool _isLoading = false;
+
   bool _isSaving = false;
 
   // Vivienda
@@ -121,7 +121,7 @@ class _AdopterProfileFormState extends State<AdopterProfileForm> {
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               decoration: const InputDecoration(labelText: 'Tipo de vivienda'),
-              value: _housingType,
+              initialValue: _housingType,
               items: const [
                 DropdownMenuItem(value: 'house', child: Text('Casa')),
                 DropdownMenuItem(value: 'apartment', child: Text('Departamento')),
@@ -138,7 +138,7 @@ class _AdopterProfileFormState extends State<AdopterProfileForm> {
             if (_hasYard)
               DropdownButtonFormField<String>(
                 decoration: const InputDecoration(labelText: 'Tamaño del patio'),
-                value: _yardSize,
+                initialValue: _yardSize,
                 items: const [
                   DropdownMenuItem(value: 'small', child: Text('Pequeño')),
                   DropdownMenuItem(value: 'medium', child: Text('Mediano')),
@@ -189,7 +189,7 @@ class _AdopterProfileFormState extends State<AdopterProfileForm> {
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               decoration: const InputDecoration(labelText: 'Experiencia con mascotas'),
-              value: _experienceLevel,
+              initialValue: _experienceLevel,
               items: const [
                 DropdownMenuItem(value: 'first_time', child: Text('Primera vez')),
                 DropdownMenuItem(value: 'some', child: Text('Alguna experiencia')),
@@ -200,7 +200,7 @@ class _AdopterProfileFormState extends State<AdopterProfileForm> {
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               decoration: const InputDecoration(labelText: 'Especie preferida'),
-              value: _preferredSpecies,
+              initialValue: _preferredSpecies,
               items: const [
                 DropdownMenuItem(value: 'dog', child: Text('Perro')),
                 DropdownMenuItem(value: 'cat', child: Text('Gato')),
@@ -211,7 +211,7 @@ class _AdopterProfileFormState extends State<AdopterProfileForm> {
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               decoration: const InputDecoration(labelText: 'Tamaño preferido'),
-              value: _preferredSize,
+              initialValue: _preferredSize,
               items: const [
                 DropdownMenuItem(value: 'small', child: Text('Pequeño')),
                 DropdownMenuItem(value: 'medium', child: Text('Mediano')),
@@ -223,7 +223,7 @@ class _AdopterProfileFormState extends State<AdopterProfileForm> {
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               decoration: const InputDecoration(labelText: 'Nivel de energía'),
-              value: _preferredEnergy,
+              initialValue: _preferredEnergy,
               items: const [
                 DropdownMenuItem(value: 'low', child: Text('Baja')),
                 DropdownMenuItem(value: 'medium', child: Text('Media')),

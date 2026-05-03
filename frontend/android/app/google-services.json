@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "333099637813",
+    "project_id": "paw-adoptar-df4a5",
+    "storage_bucket": "paw-adoptar-df4a5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:333099637813:android:204c8fbd5c70e94ccbe57c",
+        "android_client_info": {
+          "package_name": "com.paw.paw"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMp3ACt5cxridnn_E7n0vzJ8jWdX82m34"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
