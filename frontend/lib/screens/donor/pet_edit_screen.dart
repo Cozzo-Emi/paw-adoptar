@@ -132,14 +132,20 @@ class _PetEditScreenState extends State<PetEditScreen> {
       });
 
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('¡Actualizado! 🎉'), backgroundColor: Color(0xFF28A745)));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('¡Actualizado!'), backgroundColor: Color(0xFF28A745)));
         context.go('/donor');
+      } else if (mounted) {
+        setState(() => _error = provider.error ?? 'Error al actualizar');
       }
     } on DioException catch (e) {
       if (mounted) {
         String msg = e.message ?? e.toString();
         if (e.response?.data != null) {
-          msg = 'Error del servidor: ${e.response!.data}';
+          if (e.response!.data is Map) {
+            msg = e.response!.data['detail'] ?? msg;
+          } else {
+            msg = e.response!.data.toString();
+          }
         }
         setState(() => _error = msg);
       }
