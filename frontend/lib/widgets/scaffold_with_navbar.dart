@@ -58,7 +58,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
       const NavigationDestination(
         icon: Icon(Icons.person_outline),
         selectedIcon: Icon(Icons.person),
-        label: 'Donante',
+        label: 'Tutor',
       ),
       if (isModerator)
         const NavigationDestination(

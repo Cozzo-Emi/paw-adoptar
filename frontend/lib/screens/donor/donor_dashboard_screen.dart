@@ -48,14 +48,14 @@ class _DonorDashboardScreenState extends State<DonorDashboardScreen> {
 
     if (!user.isDonor) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Donante')),
+        appBar: AppBar(title: const Text('Tutor')),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(Icons.person_off, size: 64, color: Colors.grey),
               const SizedBox(height: 16),
-              const Text('No tenés configurado tu perfil de donante.'),
+              const Text('No tenés configurado tu perfil de tutor.'),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => context.go('/role-selection'),
@@ -76,7 +76,7 @@ class _DonorDashboardScreenState extends State<DonorDashboardScreen> {
     final completedMatches = matches.where((m) => m.isCompleted).length;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Panel Donante')),
+      appBar: AppBar(title: const Text('Panel Tutor')),
       body: RefreshIndicator(
         onRefresh: _loadData,
         child: ListView(

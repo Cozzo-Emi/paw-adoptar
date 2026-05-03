@@ -259,7 +259,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                 if (pet.requiresYard || pet.requiresExperience || pet.requirements != null)
                   _SectionTile(
                     icon: Icons.checklist,
-                    title: 'Requisitos del donante',
+                    title: 'Requisitos del tutor',
                     children: [
                       if (pet.requiresYard)
                         const _InfoRow(label: 'Patio', value: 'Requerido'),

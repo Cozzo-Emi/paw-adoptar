@@ -254,7 +254,7 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
             content: _buildHealthStep(),
           ),
           Step(
-            title: const Text('Requisitos'),
+            title: const Text('Requisitos del tutor'),
             isActive: _currentStep >= 3,
             content: _buildRequirementsStep(),
           ),

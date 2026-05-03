@@ -64,7 +64,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
         itemBuilder: (context, index) {
           final chat = provider.chats[index];
           final isAdopter = chat.adopterId == userId;
-          final label = isAdopter ? 'Donante' : 'Adoptante';
+          final label = isAdopter ? 'Tutor' : 'Adoptante';
 
           return ListTile(
             leading: CircleAvatar(

@@ -130,10 +130,10 @@ class _RoleBadge extends StatelessWidget {
         label = 'Adoptante';
         color = const Color(0xFFFF6584);
       case 'donor':
-        label = 'Donante';
+        label = 'Tutor';
         color = const Color(0xFF6C63FF);
       case 'both':
-        label = 'Adoptante & Donante';
+        label = 'Adoptante & Tutor';
         color = const Color(0xFF28A745);
       case 'moderator':
         label = 'Moderador';
