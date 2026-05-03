@@ -31,12 +31,15 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
 
     try {
       await context.read<AuthProvider>().updateProfile(role: role);
-      if (mounted) context.go('/feed');
+      if (mounted) {
+        final isAuth = context.read<AuthProvider>().isAuthenticated;
+        context.go(isAuth ? '/profile' : '/feed');
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al guardar el rol: ${e.toString()}'),
+            content: Text('Error al guardar: ${e.toString()}'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );

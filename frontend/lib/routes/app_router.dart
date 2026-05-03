@@ -59,8 +59,7 @@ GoRouter buildRouter({
       final isAuth = authProvider.isAuthenticated;
       final isSplash = state.matchedLocation == '/splash';
       final isAuthRoute = state.matchedLocation == '/login' ||
-          state.matchedLocation == '/register' ||
-          state.matchedLocation == '/role-selection';
+          state.matchedLocation == '/register';
 
       if (authProvider.status == AuthStatus.unknown) return '/splash';
 
