@@ -27,6 +27,7 @@ import '../services/api_client.dart';
 import '../services/chat_service.dart';
 import '../services/match_service.dart';
 import '../services/pet_service.dart';
+import '../services/token_storage.dart';
 import '../widgets/scaffold_with_navbar.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -34,7 +35,7 @@ final rootNavigatorKey = GlobalKey<NavigatorState>();
 GoRouter buildRouter({
   required AuthProvider authProvider,
   required ApiClient apiClient,
-  required FlutterSecureStorage secureStorage,
+  required TokenStorage tokenStorage,
 }) {
   final petService = PetService(client: apiClient);
   final petProvider = PetProvider(petService: petService);

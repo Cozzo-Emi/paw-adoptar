@@ -1,14 +1,14 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
 import '../models/user.dart';
 import 'api_client.dart';
+import 'token_storage.dart';
+import 'token_storage.dart';
 
 class AuthService {
   final ApiClient _client;
-  final FlutterSecureStorage _storage;
+  final TokenStorage _storage;
 
-  AuthService({required ApiClient client, required FlutterSecureStorage storage})
+  AuthService({required ApiClient client, required TokenStorage storage})
     : _client = client,
       _storage = storage;
 
