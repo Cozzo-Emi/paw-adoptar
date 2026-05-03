@@ -7,14 +7,21 @@ import 'providers/auth_provider.dart';
 import 'routes/app_router.dart';
 import 'services/api_client.dart';
 import 'services/auth_service.dart';
+import 'services/fcm_service.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final secureStorage = const FlutterSecureStorage();
   final apiClient = ApiClient(storage: secureStorage);
   final authService = AuthService(client: apiClient, storage: secureStorage);
   final authProvider = AuthProvider(authService: authService);
+
+  try {
+    await FCMService.initialize();
+  } catch (_) {
+    // Firebase no configurado — modo sin push
+  }
 
   runApp(PawApp(
     authProvider: authProvider,

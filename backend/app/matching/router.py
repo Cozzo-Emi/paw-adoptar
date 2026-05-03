@@ -331,7 +331,7 @@ async def send_post_adoption_reminders(
     Este endpoint está diseñado para ser llamado por un cron job.
     """
     from datetime import datetime, timedelta, timezone
-    from app.core.firebase import send_push_notification
+    from app.core.firebase import notify_post_adoption_reminder
 
     now = datetime.now(timezone.utc)
     reminder_start = now - timedelta(hours=72)
@@ -366,11 +366,10 @@ async def send_post_adoption_reminders(
         pet = pet_result.scalar_one_or_none()
 
         if adopter and adopter.fcm_token and pet:
-            send_push_notification(
-                token=adopter.fcm_token,
-                title="¿Cómo está tu mascota? 🐾",
-                body=f"Subí una foto de {pet.name} para confirmar su bienestar y sumar puntos.",
-                data={"type": "post_adoption_reminder", "match_id": str(match.id)},
+            notify_post_adoption_reminder(
+                fcm_token=adopter.fcm_token,
+                pet_name=pet.name,
+                match_id=str(match.id),
             )
             sent += 1
 
