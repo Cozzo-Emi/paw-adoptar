@@ -27,13 +27,20 @@ class _DonorDashboardScreenState extends State<DonorDashboardScreen> {
   }
 
   Future<void> _loadData() async {
-    final user = context.read<AuthProvider>().user;
-    if (user == null || !user.isDonor) return;
+    try {
+      final user = context.read<AuthProvider>().user;
+      if (user == null || !user.isDonor) return;
 
-    await Future.wait([
-      context.read<PetProvider>().loadPets(refresh: true, donorId: user.id),
-      context.read<MatchProvider>().loadMatches(),
-    ]);
+      final petProvider = context.read<PetProvider>();
+      final matchProvider = context.read<MatchProvider>();
+
+      await Future.wait([
+        petProvider.loadPets(refresh: true, donorId: user.id),
+        matchProvider.loadMatches(),
+      ]).timeout(const Duration(seconds: 10));
+    } catch (e) {
+      debugPrint('[Dashboard] _loadData error: $e');
+    }
   }
 
   @override
