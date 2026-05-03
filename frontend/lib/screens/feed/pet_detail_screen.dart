@@ -52,7 +52,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
             ),
             child: const Icon(Icons.arrow_back, color: Colors.white),
           ),
-          onPressed: () => context.pop(),
+          onPressed: () => context.go('/feed'),
         ),
         actions: [
           if (pet != null)
@@ -126,6 +126,8 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                   itemBuilder: (context, index) {
                     return Image.network(
                       pet.photos[index].cloudinaryUrl,
+                      width: double.infinity,
+                      height: 360,
                       fit: BoxFit.cover,
                       errorBuilder: (_, _, _) => Container(
                         color: Colors.grey[200],

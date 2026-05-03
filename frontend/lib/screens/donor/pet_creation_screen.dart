@@ -195,7 +195,7 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: _submitting ? null : () => _step == 0 ? context.pop() : setState(() => _step--),
+                      onPressed: _submitting ? null : () => _step == 0 ? context.go('/donor') : setState(() => _step--),
                       child: Text(_step == 0 ? 'Cancelar' : 'Atrás'),
                     ),
                   ),

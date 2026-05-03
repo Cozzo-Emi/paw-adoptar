@@ -133,7 +133,7 @@ class _PetEditScreenState extends State<PetEditScreen> {
 
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('¡Actualizado! 🎉'), backgroundColor: Color(0xFF28A745)));
-        context.pop(); // Go back
+        context.go('/donor');
       }
     } on DioException catch (e) {
       if (mounted) {
@@ -210,7 +210,7 @@ class _PetEditScreenState extends State<PetEditScreen> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: _submitting ? null : () => _step == 0 ? context.pop() : setState(() => _step--),
+                      onPressed: _submitting ? null : () => _step == 0 ? context.go('/donor') : setState(() => _step--),
                       child: Text(_step == 0 ? 'Cancelar' : 'Atrás'),
                     ),
                   ),
