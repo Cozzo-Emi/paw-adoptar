@@ -186,77 +186,113 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final stepLabels = ['Fotos', 'Datos', 'Salud', 'Requisitos'];
+
     return Scaffold(
       appBar: AppBar(title: const Text('Publicar Mascota')),
-      body: Stepper(
-        currentStep: _currentStep,
-        onStepContinue: () {
-          if (_currentStep >= 3) {
-            _submit();
-            return;
-          }
-          if (_currentStep == 1 && _nameController.text.trim().isEmpty) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Completá al menos el nombre antes de seguir')),
-            );
-            return;
-          }
-          setState(() => _currentStep++);
-        },
-        onStepCancel: () {
-          if (_currentStep > 0) {
-            setState(() => _currentStep--);
-          } else {
-            context.pop();
-          }
-        },
-        controlsBuilder: (context, details) {
-          return Padding(
-            padding: const EdgeInsets.only(top: 16),
+      body: Column(
+        children: [
+          // Step indicator
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Row(
-              children: [
-                ElevatedButton(
-                  onPressed: _isSubmitting ? null : details.onStepContinue,
-                  child: Text(
-                    _currentStep >= 3 ? 'Publicar' : 'Siguiente',
+              children: List.generate(4, (i) {
+                final isActive = i <= _currentStep;
+                final isCurrent = i == _currentStep;
+                return Expanded(
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          if (i > 0)
+                            Expanded(
+                              child: Container(
+                                height: 2,
+                                color: isActive ? Theme.of(context).colorScheme.primary : Colors.grey[300],
+                              ),
+                            ),
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isActive ? Theme.of(context).colorScheme.primary : Colors.grey[300],
+                              border: isCurrent ? Border.all(color: Theme.of(context).colorScheme.primary, width: 2) : null,
+                            ),
+                            child: Center(
+                              child: isActive ? const Icon(Icons.check, size: 16, color: Colors.white) : Text('${i+1}', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                            ),
+                          ),
+                          if (i < 3)
+                            Expanded(
+                              child: Container(
+                                height: 2,
+                                color: _currentStep > i ? Theme.of(context).colorScheme.primary : Colors.grey[300],
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(stepLabels[i], style: TextStyle(fontSize: 11, color: isCurrent ? Theme.of(context).colorScheme.primary : Colors.grey[500])),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 12),
-                TextButton(
-                  onPressed: _isSubmitting ? null : details.onStepCancel,
-                  child: Text(_currentStep == 0 ? 'Cancelar' : 'Anterior'),
-                ),
-              ],
+                );
+              }),
             ),
-          );
-        },
-        steps: [
-          Step(
-            title: const Text('Fotos'),
-            subtitle: Text('${_photos.length}/5 (mín 2)'),
-            isActive: _currentStep >= 0,
-            state: _photos.length >= 2
-                ? StepState.complete
-                : StepState.indexed,
-            content: _buildPhotoStep(),
           ),
-          Step(
-            title: const Text('Datos Básicos'),
-            isActive: _currentStep >= 1,
-            state: _nameController.text.trim().isNotEmpty
-                ? StepState.complete
-                : StepState.indexed,
-            content: _buildBasicDataStep(),
+          const Divider(),
+
+          // Step content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: IndexedStack(
+                index: _currentStep,
+                children: [
+                  _buildPhotoStep(),
+                  _buildBasicDataStep(),
+                  _buildHealthStep(),
+                  _buildRequirementsStep(),
+                ],
+              ),
+            ),
           ),
-          Step(
-            title: const Text('Salud y Comportamiento'),
-            isActive: _currentStep >= 2,
-            content: _buildHealthStep(),
-          ),
-          Step(
-            title: const Text('Requisitos del tutor'),
-            isActive: _currentStep >= 3,
-            content: _buildRequirementsStep(),
+
+          // Navigation buttons
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  if (_currentStep > 0)
+                    OutlinedButton(
+                      onPressed: _isSubmitting ? null : () => setState(() => _currentStep--),
+                      child: const Text('Anterior'),
+                    )
+                  else
+                    OutlinedButton(
+                      onPressed: _isSubmitting ? null : () => context.pop(),
+                      child: const Text('Cancelar'),
+                    ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _isSubmitting ? null : () {
+                        if (_currentStep >= 3) { _submit(); return; }
+                        if (_currentStep == 1 && _nameController.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Completá al menos el nombre')));
+                          return;
+                        }
+                        setState(() => _currentStep++);
+                      },
+                      child: _isSubmitting
+                          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : Text(_currentStep >= 3 ? 'Publicar' : 'Siguiente'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -283,30 +319,14 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      photo.path,
-                      width: 100,
-                      height: 100,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => FutureBuilder(
-                        future: photo.readAsBytes(),
-                        builder: (ctx, snapshot) {
-                          if (snapshot.hasData) {
-                            return Image.memory(
-                              snapshot.data!,
-                              width: 100,
-                              height: 100,
-                              fit: BoxFit.cover,
-                            );
-                          }
-                          return Container(
-                            width: 100,
-                            height: 100,
-                            color: Colors.grey[200],
-                            child: const Icon(Icons.image, color: Colors.grey),
-                          );
-                        },
-                      ),
+                    child: FutureBuilder(
+                      future: photo.readAsBytes(),
+                      builder: (ctx, snapshot) {
+                        if (snapshot.hasData) {
+                          return Image.memory(snapshot.data!, width: 100, height: 100, fit: BoxFit.cover);
+                        }
+                        return Container(width: 100, height: 100, color: Colors.grey[200], child: const Icon(Icons.image, color: Colors.grey));
+                      },
                     ),
                   ),
                   Positioned(

@@ -4,8 +4,25 @@ import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Force refresh user data on entry
+    Future.microtask(() {
+      final auth = context.read<AuthProvider>();
+      if (auth.user != null) {
+        auth.refreshUser();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
