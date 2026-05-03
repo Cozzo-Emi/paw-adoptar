@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,7 +6,6 @@ import 'package:provider/provider.dart';
 import '../../services/api_client.dart';
 import '../../services/cloudinary_service.dart';
 import '../../services/pet_service.dart';
-import '../../widgets/loading_overlay.dart';
 
 class PetCreationScreen extends StatefulWidget {
   const PetCreationScreen({super.key});
@@ -23,8 +20,8 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
 
   final _imagePicker = ImagePicker();
 
-  // Step 1: Photos
-  final List<_PhotoEntry> _photos = [];
+  // Step 1: Photos (XFile is cross-platform)
+  final List<XFile> _photos = [];
 
   // Step 2: Basic data
   final _nameController = TextEditingController();
@@ -51,10 +48,6 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
   bool _requiresYard = false;
   bool _requiresExperience = false;
 
-  // Forms
-  final _step2Key = GlobalKey<FormState>();
-  final _step4Key = GlobalKey<FormState>();
-
   @override
   void dispose() {
     _nameController.dispose();
@@ -77,11 +70,13 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
 
     if (files.isEmpty) return;
 
-    for (final file in files) {
-      setState(() {
-        _photos.add(_PhotoEntry(File(file.path)));
-      });
-    }
+    setState(() {
+      _photos.addAll(files);
+      // Limit to 5
+      if (_photos.length > 5) {
+        _photos.removeRange(5, _photos.length);
+      }
+    });
   }
 
   Future<void> _submit() async {
@@ -92,22 +87,29 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
       return;
     }
 
+    if (_nameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('El nombre es obligatorio')),
+      );
+      setState(() => _currentStep = 1);
+      return;
+    }
+
     final apiClient = context.read<ApiClient>();
     final petService = PetService(client: apiClient);
+    final cloudinaryService = CloudinaryService();
 
     setState(() => _isSubmitting = true);
 
     try {
-      // Upload photos
-      final cloudinaryService = CloudinaryService();
+      final signedParams = await petService.getSignedUploadParams();
       final uploadedPhotos = <Map<String, dynamic>>[];
 
-      final signedParams = await petService.getSignedUploadParams();
-
       for (int i = 0; i < _photos.length; i++) {
-        final entry = _photos[i];
-        final result = await cloudinaryService.uploadImage(
-          imageFile: entry.file,
+        final bytes = await _photos[i].readAsBytes();
+        final result = await cloudinaryService.uploadImageBytes(
+          bytes: bytes,
+          filename: 'pet_photo_$i.jpg',
           signedParams: signedParams,
         );
         uploadedPhotos.add({
@@ -116,19 +118,18 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
         });
       }
 
-      // Build pet data
       final petData = {
         'name': _nameController.text.trim(),
         'species': _species,
         'breed': _breedController.text.trim().isEmpty
             ? null
             : _breedController.text.trim(),
-        'age_months': int.parse(_ageController.text.trim()),
+        'age_months': int.tryParse(_ageController.text.trim()) ?? 1,
         'sex': _sex,
         'size': _size,
         'weight_kg': _weightController.text.trim().isEmpty
             ? null
-            : double.parse(_weightController.text.trim()),
+            : double.tryParse(_weightController.text.trim()),
         'color': _colorController.text.trim().isEmpty
             ? null
             : _colorController.text.trim(),
@@ -143,7 +144,9 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
         'energy_level': _energyLevel,
         'good_with_kids': _goodWithKids,
         'good_with_pets': _goodWithPets,
-        'description': _descriptionController.text.trim(),
+        'description': _descriptionController.text.trim().isEmpty
+            ? 'Sin descripción'
+            : _descriptionController.text.trim(),
         'requirements': _requirementsController.text.trim().isEmpty
             ? null
             : _requirementsController.text.trim(),
@@ -157,7 +160,7 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Mascota publicada con éxito'),
+            content: Text('¡Mascota publicada con éxito! 🎉'),
             backgroundColor: Color(0xFF28A745),
           ),
         );
@@ -167,7 +170,7 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text('Error al publicar: ${e.toString()}'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -181,88 +184,81 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
     setState(() => _photos.removeAt(index));
   }
 
-  bool get _step2Valid {
-    return _nameController.text.trim().isNotEmpty &&
-        _ageController.text.trim().isNotEmpty;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Publicar Mascota'),
-      ),
-      body: LoadingOverlay(
-        isLoading: _isSubmitting,
-        message: 'Publicando...',
-        child: Stepper(
-          currentStep: _currentStep,
-          onStepContinue: () {
-            if (_currentStep >= 3) {
-              _submit();
-              return;
-            }
-            if (_currentStep == 1 && !_step2Valid) {
-              _step2Key.currentState?.validate();
-              return;
-            }
-            setState(() => _currentStep++);
-          },
-          onStepCancel: () {
-            if (_currentStep > 0) {
-              setState(() => _currentStep--);
-            } else {
-              context.pop();
-            }
-          },
-          controlsBuilder: (context, details) {
-            return Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: Row(
-                children: [
-                  ElevatedButton(
-                    onPressed: details.onStepContinue,
-                    child: Text(
-                      _currentStep >= 3 ? 'Publicar' : 'Siguiente',
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  TextButton(
-                    onPressed: details.onStepCancel,
-                    child: Text(_currentStep == 0 ? 'Cancelar' : 'Anterior'),
-                  ),
-                ],
-              ),
+      appBar: AppBar(title: const Text('Publicar Mascota')),
+      body: Stepper(
+        currentStep: _currentStep,
+        onStepContinue: () {
+          if (_currentStep >= 3) {
+            _submit();
+            return;
+          }
+          if (_currentStep == 1 && _nameController.text.trim().isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Completá al menos el nombre antes de seguir')),
             );
-          },
-          steps: [
-            Step(
-              title: const Text('Fotos'),
-              subtitle: Text('${_photos.length}/5 (mín 2)'),
-              isActive: _currentStep >= 0,
-              state: _photos.length >= 2
-                  ? StepState.complete
-                  : StepState.indexed,
-              content: _buildPhotoStep(),
+            return;
+          }
+          setState(() => _currentStep++);
+        },
+        onStepCancel: () {
+          if (_currentStep > 0) {
+            setState(() => _currentStep--);
+          } else {
+            context.pop();
+          }
+        },
+        controlsBuilder: (context, details) {
+          return Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: Row(
+              children: [
+                ElevatedButton(
+                  onPressed: _isSubmitting ? null : details.onStepContinue,
+                  child: Text(
+                    _currentStep >= 3 ? 'Publicar' : 'Siguiente',
+                  ),
+                ),
+                const SizedBox(width: 12),
+                TextButton(
+                  onPressed: _isSubmitting ? null : details.onStepCancel,
+                  child: Text(_currentStep == 0 ? 'Cancelar' : 'Anterior'),
+                ),
+              ],
             ),
-            Step(
-              title: const Text('Datos Básicos'),
-              isActive: _currentStep >= 1,
-              state: _step2Valid ? StepState.complete : StepState.indexed,
-              content: _buildBasicDataStep(),
-            ),
-            Step(
-              title: const Text('Salud y Comportamiento'),
-              isActive: _currentStep >= 2,
-              content: _buildHealthStep(),
-            ),
-            Step(
-              title: const Text('Requisitos'),
-              isActive: _currentStep >= 3,
-              content: _buildRequirementsStep(),
-            ),
-          ],
-        ),
+          );
+        },
+        steps: [
+          Step(
+            title: const Text('Fotos'),
+            subtitle: Text('${_photos.length}/5 (mín 2)'),
+            isActive: _currentStep >= 0,
+            state: _photos.length >= 2
+                ? StepState.complete
+                : StepState.indexed,
+            content: _buildPhotoStep(),
+          ),
+          Step(
+            title: const Text('Datos Básicos'),
+            isActive: _currentStep >= 1,
+            state: _nameController.text.trim().isNotEmpty
+                ? StepState.complete
+                : StepState.indexed,
+            content: _buildBasicDataStep(),
+          ),
+          Step(
+            title: const Text('Salud y Comportamiento'),
+            isActive: _currentStep >= 2,
+            content: _buildHealthStep(),
+          ),
+          Step(
+            title: const Text('Requisitos'),
+            isActive: _currentStep >= 3,
+            content: _buildRequirementsStep(),
+          ),
+        ],
       ),
     );
   }
@@ -287,16 +283,29 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.file(
-                      photo.file,
+                    child: Image.network(
+                      photo.path,
                       width: 100,
                       height: 100,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Container(
-                        width: 100,
-                        height: 100,
-                        color: Colors.grey[200],
-                        child: const Icon(Icons.broken_image),
+                      errorBuilder: (_, _, _) => FutureBuilder(
+                        future: photo.readAsBytes(),
+                        builder: (ctx, snapshot) {
+                          if (snapshot.hasData) {
+                            return Image.memory(
+                              snapshot.data!,
+                              width: 100,
+                              height: 100,
+                              fit: BoxFit.cover,
+                            );
+                          }
+                          return Container(
+                            width: 100,
+                            height: 100,
+                            color: Colors.grey[200],
+                            child: const Icon(Icons.image, color: Colors.grey),
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -354,7 +363,6 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: Colors.grey[300]!,
-                      style: BorderStyle.solid,
                     ),
                     color: Colors.grey[50],
                   ),
@@ -365,10 +373,7 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
                       const SizedBox(height: 4),
                       Text(
                         'Agregar',
-                        style: TextStyle(
-                          color: Colors.grey[500],
-                          fontSize: 12,
-                        ),
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
                       ),
                     ],
                   ),
@@ -381,97 +386,90 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
   }
 
   Widget _buildBasicDataStep() {
-    return Form(
-      key: _step2Key,
-      child: Column(
-        children: [
-          TextFormField(
-            controller: _nameController,
-            decoration: const InputDecoration(labelText: 'Nombre *'),
-            textInputAction: TextInputAction.next,
-            validator: (v) =>
-                v == null || v.trim().isEmpty ? 'Requerido' : null,
-          ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            initialValue: _species,
-            decoration: const InputDecoration(labelText: 'Especie *'),
-            items: const [
-              DropdownMenuItem(value: 'dog', child: Text('Perro')),
-              DropdownMenuItem(value: 'cat', child: Text('Gato')),
-            ],
-            onChanged: (v) => setState(() => _species = v!),
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _breedController,
-            decoration: const InputDecoration(labelText: 'Raza'),
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  initialValue: _sex,
-                  decoration: const InputDecoration(labelText: 'Sexo *'),
-                  items: const [
-                    DropdownMenuItem(value: 'male', child: Text('Macho')),
-                    DropdownMenuItem(value: 'female', child: Text('Hembra')),
-                  ],
-                  onChanged: (v) => setState(() => _sex = v!),
-                ),
+    return Column(
+      children: [
+        TextFormField(
+          controller: _nameController,
+          decoration: const InputDecoration(labelText: 'Nombre *'),
+          textInputAction: TextInputAction.next,
+        ),
+        const SizedBox(height: 16),
+        DropdownButtonFormField<String>(
+          value: _species,
+          decoration: const InputDecoration(labelText: 'Especie *'),
+          items: const [
+            DropdownMenuItem(value: 'dog', child: Text('Perro')),
+            DropdownMenuItem(value: 'cat', child: Text('Gato')),
+          ],
+          onChanged: (v) => setState(() => _species = v!),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _breedController,
+          decoration: const InputDecoration(labelText: 'Raza'),
+          textInputAction: TextInputAction.next,
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: DropdownButtonFormField<String>(
+                value: _sex,
+                decoration: const InputDecoration(labelText: 'Sexo *'),
+                items: const [
+                  DropdownMenuItem(value: 'male', child: Text('Macho')),
+                  DropdownMenuItem(value: 'female', child: Text('Hembra')),
+                ],
+                onChanged: (v) => setState(() => _sex = v!),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  initialValue: _size,
-                  decoration: const InputDecoration(labelText: 'Tamaño *'),
-                  items: const [
-                    DropdownMenuItem(value: 'small', child: Text('Pequeño')),
-                    DropdownMenuItem(value: 'medium', child: Text('Mediano')),
-                    DropdownMenuItem(value: 'large', child: Text('Grande')),
-                  ],
-                  onChanged: (v) => setState(() => _size = v!),
-                ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: DropdownButtonFormField<String>(
+                value: _size,
+                decoration: const InputDecoration(labelText: 'Tamaño *'),
+                items: const [
+                  DropdownMenuItem(value: 'small', child: Text('Pequeño')),
+                  DropdownMenuItem(value: 'medium', child: Text('Mediano')),
+                  DropdownMenuItem(value: 'large', child: Text('Grande')),
+                ],
+                onChanged: (v) => setState(() => _size = v!),
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _ageController,
-                  decoration: const InputDecoration(
-                    labelText: 'Edad (meses) *',
-                    suffixText: 'meses',
-                  ),
-                  keyboardType: TextInputType.number,
-                  validator: (v) =>
-                      v == null || v.trim().isEmpty ? 'Requerido' : null,
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _ageController,
+                decoration: const InputDecoration(
+                  labelText: 'Edad (meses) *',
+                  suffixText: 'meses',
                 ),
+                keyboardType: TextInputType.number,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextFormField(
-                  controller: _weightController,
-                  decoration: const InputDecoration(
-                    labelText: 'Peso (kg)',
-                    suffixText: 'kg',
-                  ),
-                  keyboardType: TextInputType.number,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: _weightController,
+                decoration: const InputDecoration(
+                  labelText: 'Peso (kg)',
+                  suffixText: 'kg',
                 ),
+                keyboardType: TextInputType.number,
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _colorController,
-            decoration: const InputDecoration(labelText: 'Color'),
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _colorController,
+          decoration: const InputDecoration(labelText: 'Color'),
+        ),
+      ],
     );
   }
 
@@ -492,8 +490,7 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
           const SizedBox(height: 8),
           TextFormField(
             controller: _vaccDetailsController,
-            decoration:
-                const InputDecoration(labelText: 'Detalle de vacunas'),
+            decoration: const InputDecoration(labelText: 'Detalle de vacunas'),
             maxLines: 2,
           ),
         ],
@@ -505,7 +502,7 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
         ),
         const SizedBox(height: 16),
         DropdownButtonFormField<String>(
-          initialValue: _energyLevel,
+          value: _energyLevel,
           decoration: const InputDecoration(labelText: 'Nivel de energía'),
           items: const [
             DropdownMenuItem(value: 'low', child: Text('Baja')),
@@ -517,7 +514,7 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
         const SizedBox(height: 16),
         TextFormField(
           controller: _descriptionController,
-          decoration: const InputDecoration(labelText: 'Descripción *'),
+          decoration: const InputDecoration(labelText: 'Descripción'),
           maxLines: 3,
         ),
         const SizedBox(height: 12),
@@ -553,38 +550,31 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
   }
 
   Widget _buildRequirementsStep() {
-    return Form(
-      key: _step4Key,
-      child: Column(
-        children: [
-          TextFormField(
-            controller: _requirementsController,
-            decoration: const InputDecoration(
-              labelText: 'Requisitos para el adoptante',
-              hintText: 'Ej: Tener espacio amplio, experiencia previa...',
-            ),
-            maxLines: 3,
+    return Column(
+      children: [
+        TextFormField(
+          controller: _requirementsController,
+          decoration: const InputDecoration(
+            labelText: 'Requisitos para el adoptante',
+            hintText: 'Ej: Tener espacio amplio, experiencia previa...',
           ),
-          const SizedBox(height: 16),
-          SwitchListTile(
-            title: const Text('Requiere patio'),
-            subtitle: const Text('La mascota necesita espacio exterior'),
-            value: _requiresYard,
-            onChanged: (v) => setState(() => _requiresYard = v),
-          ),
-          SwitchListTile(
-            title: const Text('Requiere experiencia previa'),
-            subtitle: const Text('El adoptante debe tener experiencia con mascotas'),
-            value: _requiresExperience,
-            onChanged: (v) => setState(() => _requiresExperience = v),
-          ),
-        ],
-      ),
+          maxLines: 3,
+        ),
+        const SizedBox(height: 16),
+        SwitchListTile(
+          title: const Text('Requiere patio'),
+          subtitle: const Text('La mascota necesita espacio exterior'),
+          value: _requiresYard,
+          onChanged: (v) => setState(() => _requiresYard = v),
+        ),
+        SwitchListTile(
+          title: const Text('Requiere experiencia previa'),
+          subtitle:
+              const Text('El adoptante debe tener experiencia con mascotas'),
+          value: _requiresExperience,
+          onChanged: (v) => setState(() => _requiresExperience = v),
+        ),
+      ],
     );
   }
-}
-
-class _PhotoEntry {
-  final File file;
-  const _PhotoEntry(this.file);
 }

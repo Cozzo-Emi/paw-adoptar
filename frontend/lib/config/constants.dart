@@ -1,5 +1,3 @@
-import 'platform_utils.dart';
-
 class AppConstants {
   AppConstants._();
 
