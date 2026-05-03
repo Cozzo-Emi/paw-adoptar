@@ -57,4 +57,9 @@ class PetService {
     final response = await _client.dio.post('/pets', data: petData);
     return Pet.fromJson(response.data as Map<String, dynamic>);
   }
+
+  Future<Pet> updatePet(String petId, Map<String, dynamic> updateData) async {
+    final response = await _client.dio.patch('/pets/$petId', data: updateData);
+    return Pet.fromJson(response.data as Map<String, dynamic>);
+  }
 }

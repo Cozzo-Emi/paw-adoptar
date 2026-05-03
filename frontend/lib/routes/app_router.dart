@@ -15,6 +15,7 @@ import '../screens/feed/pet_feed_screen.dart';
 import '../screens/feed/pet_detail_screen.dart';
 import '../screens/donor/donor_dashboard_screen.dart';
 import '../screens/donor/pet_creation_screen.dart';
+import '../screens/donor/pet_edit_screen.dart';
 import '../screens/matches/match_inbox_screen.dart';
 import '../screens/matches/chat_list_screen.dart';
 import '../screens/matches/chat_room_screen.dart';
@@ -27,6 +28,7 @@ import '../services/api_client.dart';
 import '../services/chat_service.dart';
 import '../services/match_service.dart';
 import '../services/pet_service.dart';
+import '../services/token_storage.dart';
 import '../widgets/scaffold_with_navbar.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -34,7 +36,7 @@ final rootNavigatorKey = GlobalKey<NavigatorState>();
 GoRouter buildRouter({
   required AuthProvider authProvider,
   required ApiClient apiClient,
-  required FlutterSecureStorage secureStorage,
+  required TokenStorage tokenStorage,
 }) {
   final petService = PetService(client: apiClient);
   final petProvider = PetProvider(petService: petService);
@@ -42,7 +44,7 @@ GoRouter buildRouter({
   final matchService = MatchService(client: apiClient);
   final matchProvider = MatchProvider(matchService: matchService);
 
-  final chatService = ChatService(client: apiClient, storage: secureStorage);
+  final chatService = ChatService(client: apiClient);
   final chatProvider = ChatProvider(chatService: chatService);
 
   final shellProviders = [
@@ -59,8 +61,7 @@ GoRouter buildRouter({
       final isAuth = authProvider.isAuthenticated;
       final isSplash = state.matchedLocation == '/splash';
       final isAuthRoute = state.matchedLocation == '/login' ||
-          state.matchedLocation == '/register' ||
-          state.matchedLocation == '/role-selection';
+          state.matchedLocation == '/register';
 
       if (authProvider.status == AuthStatus.unknown) return '/splash';
 
@@ -122,6 +123,16 @@ GoRouter buildRouter({
               providers: shellProviders,
               child: const PetCreationScreen(),
             ),
+          ),
+          GoRoute(
+            path: '/donor/edit/:petId',
+            builder: (context, state) {
+              final petId = state.pathParameters['petId']!;
+              return MultiProvider(
+                providers: shellProviders,
+                child: PetEditScreen(petId: petId),
+              );
+            },
           ),
           GoRoute(
             path: '/matches',

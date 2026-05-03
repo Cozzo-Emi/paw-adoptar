@@ -1,14 +1,14 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
 import '../models/user.dart';
 import 'api_client.dart';
+import 'token_storage.dart';
+import 'token_storage.dart';
 
 class AuthService {
   final ApiClient _client;
-  final FlutterSecureStorage _storage;
+  final TokenStorage _storage;
 
-  AuthService({required ApiClient client, required FlutterSecureStorage storage})
+  AuthService({required ApiClient client, required TokenStorage storage})
     : _client = client,
       _storage = storage;
 
@@ -57,14 +57,11 @@ class AuthService {
   }
 
   Future<User> updateProfile({String? role, String? city, String? province}) async {
-    final response = await _client.dio.put(
-      '/users/me',
-      data: {
-        'role': ?role,
-        'city': ?city,
-        'province': ?province,
-      },
-    );
+    final data = <String, dynamic>{};
+    if (role != null) data['role'] = role;
+    if (city != null) data['city'] = city;
+    if (province != null) data['province'] = province;
+    final response = await _client.dio.put('/users/me', data: data);
     return User.fromJson(response.data as Map<String, dynamic>);
   }
 

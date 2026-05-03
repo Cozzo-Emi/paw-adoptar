@@ -87,7 +87,7 @@ class _AdopterProfileFormState extends State<AdopterProfileForm> {
             backgroundColor: Color(0xFF28A745),
           ),
         );
-        context.pop();
+        context.go('/profile');
       }
     } catch (e) {
       if (mounted) {

@@ -1,15 +1,15 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../config/constants.dart';
 import '../models/user.dart';
+import 'token_storage.dart';
 
 class ApiClient {
   late final Dio _dio;
-  final FlutterSecureStorage _storage;
+  final TokenStorage _storage;
   bool _isRefreshing = false;
 
-  ApiClient({required FlutterSecureStorage storage}) : _storage = storage {
+  ApiClient({required TokenStorage storage}) : _storage = storage {
     _dio = Dio(
       BaseOptions(
         baseUrl: AppConstants.apiBaseUrl,

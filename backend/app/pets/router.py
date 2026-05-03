@@ -17,7 +17,7 @@ from app.core.cloudinary_utils import generate_signed_upload_params
 from app.core.matching import calculate_compatibility
 from app.database import get_db
 from app.pets.models import Pet, PetPhoto, PetStatus, Species, PetSize
-from app.pets.schemas import PetCreate, PetPhotoCreate, PetPhotoRead, PetRead
+from app.pets.schemas import PetCreate, PetPhotoCreate, PetPhotoRead, PetRead, PetUpdate
 from app.users.models import AdopterProfile, User
 
 router = APIRouter(prefix="/pets", tags=["Pets"])
@@ -182,6 +182,47 @@ async def get_pet(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Pet not found",
         )
+
+    return pet
+
+
+@router.patch("/{pet_id}", response_model=PetRead)
+async def update_pet(
+    pet_id: UUID,
+    pet_in: PetUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Actualiza los datos de una mascota.
+    Solo el tutor de la mascota puede modificarla.
+    """
+    stmt = (
+        select(Pet)
+        .where(Pet.id == pet_id)
+        .options(selectinload(Pet.photos))
+    )
+    result = await db.execute(stmt)
+    pet = result.scalar_one_or_none()
+
+    if not pet:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Pet not found",
+        )
+
+    if pet.donor_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only update your own pets.",
+        )
+
+    update_data = pet_in.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(pet, key, value)
+
+    await db.commit()
+    await db.refresh(pet)
 
     return pet
 

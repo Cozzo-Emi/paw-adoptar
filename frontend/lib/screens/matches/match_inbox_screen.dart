@@ -190,7 +190,7 @@ class _MatchCard extends StatelessWidget {
 
   String get _otherName {
     if (match.adopterId == userId) {
-      return match.donorName ?? 'Donante';
+      return match.donorName ?? 'Tutor';
     }
     return match.adopterName ?? 'Adoptante';
   }

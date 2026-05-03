@@ -15,35 +15,56 @@ class DonorDashboardScreen extends StatefulWidget {
 }
 
 class _DonorDashboardScreenState extends State<DonorDashboardScreen> {
+  bool _initialized = false;
+
   @override
-  void initState() {
-    super.initState();
-    _loadData();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _initialized = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadData();
+      });
+    }
   }
 
-  void _loadData() {
-    final user = context.read<AuthProvider>().user;
-    if (user?.isDonor == true) {
-      context.read<PetProvider>().loadPets(refresh: true, donorId: user!.id);
-      context.read<MatchProvider>().loadMatches();
+  Future<void> _loadData() async {
+    try {
+      final user = context.read<AuthProvider>().user;
+      if (user == null || !user.isDonor) return;
+
+      final petProvider = context.read<PetProvider>();
+      final matchProvider = context.read<MatchProvider>();
+
+      await Future.wait([
+        petProvider.loadPets(refresh: true, donorId: user.id),
+        matchProvider.loadMatches(),
+      ]).timeout(const Duration(seconds: 10));
+    } catch (e) {
+      debugPrint('[Dashboard] _loadData error: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<AuthProvider>().user!;
-    final isDonor = user.isDonor;
+    final user = context.watch<AuthProvider>().user;
 
-    if (!isDonor) {
+    if (user == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (!user.isDonor) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Donante')),
+        appBar: AppBar(title: const Text('Tutor')),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(Icons.person_off, size: 64, color: Colors.grey),
               const SizedBox(height: 16),
-              const Text('No tenés configurado tu perfil de donante.'),
+              const Text('No tenés configurado tu perfil de tutor.'),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => context.go('/role-selection'),
@@ -64,9 +85,9 @@ class _DonorDashboardScreenState extends State<DonorDashboardScreen> {
     final completedMatches = matches.where((m) => m.isCompleted).length;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Panel Donante')),
+      appBar: AppBar(title: const Text('Panel Tutor')),
       body: RefreshIndicator(
-        onRefresh: () async => _loadData(),
+        onRefresh: _loadData,
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
@@ -99,7 +120,6 @@ class _DonorDashboardScreenState extends State<DonorDashboardScreen> {
             ),
             const SizedBox(height: 32),
 
-            // Lista de mascotas
             if (pets.isNotEmpty) ...[
               Text(
                 'Mis Mascotas',
@@ -112,6 +132,23 @@ class _DonorDashboardScreenState extends State<DonorDashboardScreen> {
               const SizedBox(height: 16),
             ],
 
+            if (pets.isEmpty && !petProvider.isLoading)
+              Card(
+                color: Colors.grey[50],
+                child: const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      Icon(Icons.pets, size: 48, color: Colors.grey),
+                      SizedBox(height: 8),
+                      Text('No tenés mascotas publicadas todavía.',
+                          style: TextStyle(color: Colors.grey)),
+                    ],
+                  ),
+                ),
+              ),
+
+            const SizedBox(height: 24),
             Text(
               'Publicar Mascota',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -123,13 +160,18 @@ class _DonorDashboardScreenState extends State<DonorDashboardScreen> {
               'Completá los pasos para crear una ficha de adopción',
               style: TextStyle(color: Colors.grey[600]),
             ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => context.go('/donor/publish'),
+                icon: const Icon(Icons.add),
+                label: const Text('Publicar Mascota'),
+              ),
+            ),
+            const SizedBox(height: 40),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.go('/donor/publish'),
-        icon: const Icon(Icons.add),
-        label: const Text('Publicar Mascota'),
       ),
     );
   }
@@ -179,25 +221,33 @@ class _DonorPetTile extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              child: Image.network(
-                pet.coverImage,
-                width: 60,
-                height: 60,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => Container(
-                  width: 60,
-                  height: 60,
-                  color: Colors.grey[200],
-                  child: const Icon(Icons.pets, color: Colors.grey),
-                ),
-              ),
+              child: pet.coverImage.isNotEmpty
+                  ? Image.network(
+                      pet.coverImage,
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => Container(
+                        width: 60,
+                        height: 60,
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.pets, color: Colors.grey),
+                      ),
+                    )
+                  : Container(
+                      width: 60,
+                      height: 60,
+                      color: Colors.grey[200],
+                      child: const Icon(Icons.pets, color: Colors.grey),
+                    ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(pet.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  Text(pet.name,
+                      style: const TextStyle(fontWeight: FontWeight.w600)),
                   Text(
                     '${pet.speciesLabel} · ${pet.ageFormatted}',
                     style: TextStyle(color: Colors.grey[600], fontSize: 13),
@@ -206,7 +256,8 @@ class _DonorPetTile extends StatelessWidget {
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: _statusColor().withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
@@ -220,6 +271,11 @@ class _DonorPetTile extends StatelessWidget {
                 ),
               ),
             ),
+            if (pet.status == 'available')
+              IconButton(
+                icon: const Icon(Icons.edit, size: 20, color: Colors.grey),
+                onPressed: () => context.go('/donor/edit/${pet.id}'),
+              ),
           ],
         ),
       ),

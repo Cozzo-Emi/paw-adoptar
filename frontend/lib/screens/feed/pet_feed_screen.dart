@@ -21,7 +21,9 @@ class _PetFeedScreenState extends State<PetFeedScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    context.read<PetProvider>().loadPets(refresh: true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<PetProvider>().loadPets(refresh: true);
+    });
   }
 
   @override
