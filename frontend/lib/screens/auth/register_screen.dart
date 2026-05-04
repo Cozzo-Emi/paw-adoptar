@@ -21,6 +21,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _acceptedTerms = false;
 
   @override
   void dispose() {
@@ -34,6 +35,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
+    if (!_acceptedTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Debés aceptar los Términos de Uso')),
+      );
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -200,7 +207,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: _acceptedTerms,
+                        onChanged: (v) => setState(() => _acceptedTerms = v ?? false),
+                      ),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => _showTerms(context),
+                          child: const Text.rich(
+                            TextSpan(
+                              text: 'Acepto los ',
+                              style: TextStyle(fontSize: 13),
+                              children: [
+                                TextSpan(
+                                  text: 'Términos de Uso',
+                                  style: TextStyle(color: Color(0xFF6C63FF), decoration: TextDecoration.underline),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -220,6 +253,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _showTerms(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Términos de Uso'),
+        content: const SingleChildScrollView(
+          child: Text(
+            'PAW - App de Adopción de Mascotas\n\n'
+            'Al registrarte en PAW, aceptás los siguientes términos:\n\n'
+            '1. Solo publicarás mascotas reales disponibles para adopción responsable. No se permite la venta de animales.\n\n'
+            '2. La información proporcionada debe ser veraz. Los perfiles falsos serán suspendidos.\n\n'
+            '3. Las fotos publicadas deben ser de tu autoría y mostrar al animal real.\n\n'
+            '4. No se permite contenido ofensivo, discriminatorio o inapropiado.\n\n'
+            '5. Tus datos personales se tratan según la Ley 25.326 de Protección de Datos Personales (Argentina).\n\n'
+            '6. PAW se reserva el derecho de moderar, editar o eliminar cualquier contenido que viole estos términos.\n\n'
+            '7. El equipo de PAW puede contactarte para verificar información o resolver incidencias.',
+            style: TextStyle(fontSize: 13, height: 1.5),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cerrar')),
+        ],
       ),
     );
   }
