@@ -10,10 +10,13 @@ class PetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final cardHeight = screenWidth > 600 ? 380.0 : screenWidth * 0.7;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 340,
+        height: cardHeight,
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
@@ -36,6 +39,8 @@ class PetCard extends StatelessWidget {
                         pet.coverImage,
                         fit: BoxFit.cover,
                         errorBuilder: (_, _, _) => _buildPlaceholder(),
+                        loadingBuilder: (_, child, progress) =>
+                            progress == null ? child : _buildPlaceholder(),
                       )
                     : _buildPlaceholder(),
               ),

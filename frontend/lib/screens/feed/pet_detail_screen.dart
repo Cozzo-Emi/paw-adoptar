@@ -117,7 +117,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
         // Carrusel de fotos
         SliverToBoxAdapter(
           child: SizedBox(
-            height: 360,
+            height: MediaQuery.of(context).size.height * 0.4,
             child: Stack(
               children: [
                 PageView.builder(
@@ -130,7 +130,6 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                     return Image.network(
                       pet.photos[index].cloudinaryUrl,
                       width: double.infinity,
-                      height: 360,
                       fit: BoxFit.cover,
                       errorBuilder: (_, _, _) => Container(
                         color: Colors.grey[200],
