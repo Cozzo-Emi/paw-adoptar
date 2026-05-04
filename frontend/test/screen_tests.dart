@@ -22,6 +22,12 @@ import 'package:paw/services/pet_service.dart';
 import 'package:paw/services/chat_service.dart';
 import 'package:paw/services/match_service.dart';
 import 'package:paw/services/token_storage.dart';
+import 'package:paw/screens/matches/match_inbox_screen.dart';
+import 'package:paw/screens/matches/chat_list_screen.dart';
+import 'package:paw/screens/matches/chat_room_screen.dart';
+import 'package:paw/screens/profile/profile_screen.dart';
+import 'package:paw/screens/feed/filter_modal.dart';
+import 'package:paw/models/pet.dart';
 
 // ─── Helpers ────────────────────────────────────────────
 
