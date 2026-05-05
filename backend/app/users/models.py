@@ -23,11 +23,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
-
 # ─── Enums ───────────────────────────────────────────────
+
 
 class UserRole(str, enum.Enum):
     """Rol principal del usuario en la plataforma."""
+
     ADOPTER = "adopter"
     DONOR = "donor"
     BOTH = "both"
@@ -37,6 +38,7 @@ class UserRole(str, enum.Enum):
 
 class HousingType(str, enum.Enum):
     """Tipo de vivienda del adoptante."""
+
     HOUSE = "house"
     APARTMENT = "apartment"
     RURAL = "rural"
@@ -50,6 +52,7 @@ class YardSize(str, enum.Enum):
 
 class ExperienceLevel(str, enum.Enum):
     """Experiencia previa del adoptante con mascotas."""
+
     FIRST_TIME = "first_time"
     SOME = "some"
     EXPERIENCED = "experienced"
@@ -77,19 +80,22 @@ class EnergyLevel(str, enum.Enum):
 
 class VerificationLevel(int, enum.Enum):
     """Niveles de verificación del documento del proyecto."""
-    NONE = 0        # Sin verificación
-    BASIC = 1       # Email o teléfono verificado
-    IDENTITY = 2    # Documento de identidad verificado
-    PREMIUM = 3     # Videollamada (fase 2, fuera del MVP)
+
+    NONE = 0  # Sin verificación
+    BASIC = 1  # Email o teléfono verificado
+    IDENTITY = 2  # Documento de identidad verificado
+    PREMIUM = 3  # Videollamada (fase 2, fuera del MVP)
 
 
 # ─── Modelo: Usuario ────────────────────────────────────
+
 
 class User(Base):
     """
     Usuario base de la plataforma.
     Puede tener rol de adoptante, donante, ambos, moderador o admin.
     """
+
     __tablename__ = "users"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -110,6 +116,9 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_verified_email: Mapped[bool] = mapped_column(Boolean, default=False)
     is_verified_phone: Mapped[bool] = mapped_column(Boolean, default=False)
+    email_verification_token: Mapped[str | None] = mapped_column(
+        String(8), nullable=True
+    )
     verification_level: Mapped[int] = mapped_column(
         Integer, default=VerificationLevel.NONE
     )
@@ -148,11 +157,13 @@ class User(Base):
 
 # ─── Modelo: Perfil Adoptante ────────────────────────────
 
+
 class AdopterProfile(Base):
     """
     Perfil del adoptante: información que demuestra aptitud para adoptar.
     Visible al donante tras match/consentimiento (según doc del proyecto).
     """
+
     __tablename__ = "adopter_profiles"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -170,9 +181,7 @@ class AdopterProfile(Base):
         Enum(HousingType), nullable=True
     )
     has_yard: Mapped[bool] = mapped_column(Boolean, default=False)
-    yard_size: Mapped[YardSize | None] = mapped_column(
-        Enum(YardSize), nullable=True
-    )
+    yard_size: Mapped[YardSize | None] = mapped_column(Enum(YardSize), nullable=True)
 
     # ─── Convivencia ──────────────────────────────────
     has_other_pets: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -224,11 +233,13 @@ class AdopterProfile(Base):
 
 # ─── Modelo: Perfil Donante ──────────────────────────────
 
+
 class DonorProfile(Base):
     """
     Perfil del donante: persona u organización que entrega mascotas.
     Visible a adoptantes según el documento del proyecto.
     """
+
     __tablename__ = "donor_profiles"
 
     id: Mapped[uuid.UUID] = mapped_column(

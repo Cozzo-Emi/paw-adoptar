@@ -3,16 +3,21 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
+
 class BaseSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+
 # ─── Mensaje ─────────────────────────────────────────────
+
 
 class MessageBase(BaseSchema):
     content: str
 
+
 class MessageCreate(MessageBase):
     pass
+
 
 class MessageRead(MessageBase):
     id: UUID
@@ -21,7 +26,9 @@ class MessageRead(MessageBase):
     is_read: bool
     created_at: datetime
 
+
 # ─── Chat ────────────────────────────────────────────────
+
 
 class ChatRead(BaseSchema):
     id: UUID

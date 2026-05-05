@@ -93,7 +93,7 @@ async def get_user_by_id(
     user_id: UUID,
     db: AsyncSession = Depends(get_db),
     # Solo usuarios logueados pueden ver perfiles
-    current_user: User = Depends(get_current_user), 
+    current_user: User = Depends(get_current_user),
 ):
     """
     Devuelve el perfil público de otro usuario.
@@ -110,6 +110,7 @@ async def get_user_by_id(
         )
 
     return user
+
 
 @router.put("/me", response_model=UserRead)
 async def update_my_user(
@@ -152,5 +153,5 @@ async def update_fcm_token(
     current_user.fcm_token = fcm_data.token
     db.add(current_user)
     await db.commit()
-    
+
     return {"status": "success", "detail": "FCM token updated"}

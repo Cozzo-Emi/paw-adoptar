@@ -21,19 +21,21 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
-
 # ─── Enums ───────────────────────────────────────────────
+
 
 class MatchStatus(str, enum.Enum):
     """Ciclo de vida de un match según el doc del proyecto."""
-    PENDING = "pending"       # Adoptante expresó interés
-    ACCEPTED = "accepted"     # Donante aceptó → se habilita chat
-    REJECTED = "rejected"     # Donante rechazó
-    COMPLETED = "completed"   # Adopción confirmada por ambas partes
-    CANCELLED = "cancelled"   # Cancelado por cualquiera de las partes
+
+    PENDING = "pending"  # Adoptante expresó interés
+    ACCEPTED = "accepted"  # Donante aceptó → se habilita chat
+    REJECTED = "rejected"  # Donante rechazó
+    COMPLETED = "completed"  # Adopción confirmada por ambas partes
+    CANCELLED = "cancelled"  # Cancelado por cualquiera de las partes
 
 
 # ─── Modelo: Match ──────────────────────────────────────
+
 
 class Match(Base):
     """
@@ -41,6 +43,7 @@ class Match(Base):
     Se crea cuando el adoptante expresa interés (status=pending).
     Se activa cuando el donante acepta (status=accepted → habilita chat).
     """
+
     __tablename__ = "matches"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -127,10 +130,13 @@ class Match(Base):
             return None
 
     def __repr__(self) -> str:
-        return f"<Match adopter={self.adopter_id} pet={self.pet_id} ({self.status.value})>"
+        return (
+            f"<Match adopter={self.adopter_id} pet={self.pet_id} ({self.status.value})>"
+        )
 
 
 # ─── Modelo: Evidencia Post-Adopción ─────────────────────
+
 
 class PostAdoptionEvidence(Base):
     """
@@ -138,6 +144,7 @@ class PostAdoptionEvidence(Base):
     Según el doc: notificación a las 48-72h, si no sube en 7 días
     se marca para seguimiento manual.
     """
+
     __tablename__ = "post_adoption_evidence"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -171,7 +178,9 @@ class PostAdoptionEvidence(Base):
 
     # ─── Relaciones ──────────────────────────────────────
     match: Mapped["Match"] = relationship(back_populates="evidence")
-    adopter: Mapped["User"] = relationship("User", backref="evidence_submitted")  # noqa: F821
+    adopter: Mapped["User"] = relationship(
+        "User", backref="evidence_submitted"
+    )  # noqa: F821
 
     def __repr__(self) -> str:
         return f"<PostAdoptionEvidence match={self.match_id}>"

@@ -92,8 +92,10 @@ async def create_review(
             status_code=status.HTTP_404_NOT_FOUND, detail="Match not found."
         )
 
-    if current_user.id not in [match.adopter_id, match.donor_id] or \
-       review_in.reviewed_id not in [match.adopter_id, match.donor_id]:
+    if current_user.id not in [
+        match.adopter_id,
+        match.donor_id,
+    ] or review_in.reviewed_id not in [match.adopter_id, match.donor_id]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Both users must be part of the provided match.",
@@ -101,8 +103,7 @@ async def create_review(
 
     # Verificar si ya existe una review de este reviewer para este match
     existing_stmt = select(Review).where(
-        Review.match_id == review_in.match_id,
-        Review.reviewer_id == current_user.id
+        Review.match_id == review_in.match_id, Review.reviewer_id == current_user.id
     )
     existing_result = await db.execute(existing_stmt)
     if existing_result.scalar_one_or_none():
@@ -186,7 +187,9 @@ async def get_report(
     report = result.scalar_one_or_none()
 
     if not report:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Report not found"
+        )
 
     return report
 
@@ -210,7 +213,9 @@ async def update_report(
     report = result.scalar_one_or_none()
 
     if not report:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Report not found"
+        )
 
     report.status = update.status
     report.moderator_id = current_moderator.id

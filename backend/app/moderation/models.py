@@ -21,11 +21,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
-
 # ─── Enums ───────────────────────────────────────────────
+
 
 class ReportReason(str, enum.Enum):
     """Motivos de reporte disponibles para los usuarios."""
+
     FRAUD = "fraud"
     ABUSE = "abuse"
     FAKE_LISTING = "fake_listing"
@@ -35,19 +36,22 @@ class ReportReason(str, enum.Enum):
 
 class ReportStatus(str, enum.Enum):
     """Estado del reporte en la cola de moderación."""
-    PENDING = "pending"       # Recién creado
-    REVIEWING = "reviewing"   # Un moderador lo está revisando
-    RESOLVED = "resolved"     # Resuelto (acción tomada)
-    DISMISSED = "dismissed"   # Descartado (sin mérito)
+
+    PENDING = "pending"  # Recién creado
+    REVIEWING = "reviewing"  # Un moderador lo está revisando
+    RESOLVED = "resolved"  # Resuelto (acción tomada)
+    DISMISSED = "dismissed"  # Descartado (sin mérito)
 
 
 # ─── Modelo: Reporte ─────────────────────────────────────
+
 
 class Report(Base):
     """
     Reporte de abuso o fraude generado por un usuario.
     Revisión humana por moderadores según doc del proyecto.
     """
+
     __tablename__ = "reports"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -72,9 +76,7 @@ class Report(Base):
         nullable=True,
     )
 
-    reason: Mapped[ReportReason] = mapped_column(
-        Enum(ReportReason), nullable=False
-    )
+    reason: Mapped[ReportReason] = mapped_column(Enum(ReportReason), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
 
     status: Mapped[ReportStatus] = mapped_column(
@@ -113,12 +115,14 @@ class Report(Base):
 
 # ─── Modelo: Review / Valoración ─────────────────────────
 
+
 class Review(Base):
     """
     Valoración (1-5 estrellas) + comentario tras una adopción completada.
     Según doc: las estrellas y comentarios son visibles en el perfil.
     Incrementan o afectan la reputación del usuario.
     """
+
     __tablename__ = "reviews"
 
     id: Mapped[uuid.UUID] = mapped_column(

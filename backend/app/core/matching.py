@@ -52,7 +52,9 @@ def _passes_hard_filters(adopter_profile: "AdopterProfile | None", pet: "Pet") -
     return True
 
 
-def _calc_requirements_match(adopter_profile: "AdopterProfile | None", pet: "Pet") -> float:
+def _calc_requirements_match(
+    adopter_profile: "AdopterProfile | None", pet: "Pet"
+) -> float:
     if adopter_profile is None:
         return 0.3
 
@@ -66,7 +68,10 @@ def _calc_requirements_match(adopter_profile: "AdopterProfile | None", pet: "Pet
 
     if pet.requires_experience:
         checks += 1
-        if adopter_profile.experience_level and adopter_profile.experience_level.value in ("some", "experienced"):
+        if (
+            adopter_profile.experience_level
+            and adopter_profile.experience_level.value in ("some", "experienced")
+        ):
             passed += 1
 
     if checks == 0:
@@ -86,11 +91,7 @@ def _calc_proximity(
     adopter_user: "User",
     pet: "Pet",
 ) -> float:
-    max_km = (
-        adopter_profile.max_distance_km
-        if adopter_profile
-        else 50
-    )
+    max_km = adopter_profile.max_distance_km if adopter_profile else 50
 
     # If coordinates available, calculate haversine distance
     if (

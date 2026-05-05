@@ -9,6 +9,7 @@ from jose import JWTError, jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.dependencies import get_current_user
 from app.auth.schemas import RefreshTokenRequest, Token, TokenPayload
 from app.config import get_settings
 from app.core.security import (
@@ -28,7 +29,9 @@ settings = get_settings()
 
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 @limiter.limit(get_rate_limit("5/minute"))
-async def register_user(user_in: UserCreate, request: Request, db: AsyncSession = Depends(get_db)):
+async def register_user(
+    user_in: UserCreate, request: Request, db: AsyncSession = Depends(get_db)
+):
     """
     Registra un nuevo usuario en la plataforma.
     Valida que el email no esté ya registrado.
@@ -63,11 +66,11 @@ async def register_user(user_in: UserCreate, request: Request, db: AsyncSession 
         city=user_in.city,
         province=user_in.province,
     )
-    
+
     db.add(db_user)
     await db.commit()
     await db.refresh(db_user)
-    
+
     return db_user
 
 
@@ -76,7 +79,7 @@ async def register_user(user_in: UserCreate, request: Request, db: AsyncSession 
 async def login_access_token(
     request: Request,
     db: AsyncSession = Depends(get_db),
-    form_data: OAuth2PasswordRequestForm = Depends()
+    form_data: OAuth2PasswordRequestForm = Depends(),
 ):
     """
     OAuth2 compatible token login, requiere username (email) y password en form-data.
@@ -89,7 +92,7 @@ async def login_access_token(
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Incorrect email or password"
+            detail="Incorrect email or password",
         )
     elif not user.is_active:
         raise HTTPException(
@@ -146,3 +149,53 @@ async def refresh_access_token(
         "refresh_token": create_refresh_token(user.id),
         "token_type": "bearer",
     }
+
+
+@router.post("/send-verification", response_model=dict)
+async def send_verification(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Genera un código OTP de 6 dígitos para verificar el email."""
+    import random
+
+    if current_user.is_verified_email:
+        return {"status": "already_verified", "detail": "Email already verified."}
+
+    token = f"{random.randint(100000, 999999)}"
+    current_user.email_verification_token = token
+    db.add(current_user)
+    await db.commit()
+
+    return {"status": "sent", "token": token, "detail": "Verification code sent."}
+
+
+@router.post("/verify-email", response_model=dict)
+async def verify_email(
+    token: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Verifica el email con el código recibido por /send-verification."""
+    if current_user.is_verified_email:
+        return {"status": "already_verified", "detail": "Email already verified."}
+
+    if not current_user.email_verification_token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No verification code requested.",
+        )
+
+    if current_user.email_verification_token != token.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid verification code.",
+        )
+
+    current_user.is_verified_email = True
+    current_user.verification_level = 1
+    current_user.email_verification_token = None
+    db.add(current_user)
+    await db.commit()
+
+    return {"status": "verified", "detail": "Email verified successfully."}

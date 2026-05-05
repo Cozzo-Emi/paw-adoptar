@@ -16,7 +16,12 @@ from app.core.matching import calculate_compatibility
 from app.database import get_db
 from app.main import get_rate_limit, limiter
 from app.matching.models import Match, MatchStatus, PostAdoptionEvidence
-from app.matching.schemas import MatchCreate, MatchRead, PostAdoptionEvidenceCreate, PostAdoptionEvidenceRead
+from app.matching.schemas import (
+    MatchCreate,
+    MatchRead,
+    PostAdoptionEvidenceCreate,
+    PostAdoptionEvidenceRead,
+)
 from app.pets.models import Pet, PetStatus
 from app.users.models import AdopterProfile, User
 
@@ -115,10 +120,10 @@ async def create_match(
 
     if donor and donor.fcm_token:
         background_tasks.add_task(
-            notify_new_match, 
-            fcm_token=donor.fcm_token, 
-            pet_name=pet.name, 
-            adopter_name=current_user.full_name
+            notify_new_match,
+            fcm_token=donor.fcm_token,
+            pet_name=pet.name,
+            adopter_name=current_user.full_name,
         )
 
     return db_match
@@ -147,6 +152,7 @@ async def list_my_matches(
 
     # OR entre las condiciones
     from sqlalchemy import or_
+
     stmt = (
         select(Match)
         .where(or_(*conditions))
@@ -196,6 +202,7 @@ async def accept_match(
         )
 
     from datetime import datetime, timezone
+
     match.status = MatchStatus.ACCEPTED
     match.matched_at = datetime.now(timezone.utc)
 
@@ -215,9 +222,7 @@ async def accept_match(
 
     if adopter and adopter.fcm_token:
         background_tasks.add_task(
-            notify_match_accepted,
-            fcm_token=adopter.fcm_token,
-            pet_name=pet.name
+            notify_match_accepted, fcm_token=adopter.fcm_token, pet_name=pet.name
         )
 
     return match
@@ -262,7 +267,11 @@ async def reject_match(
     return match
 
 
-@router.post("/{match_id}/evidence", response_model=PostAdoptionEvidenceRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{match_id}/evidence",
+    response_model=PostAdoptionEvidenceRead,
+    status_code=status.HTTP_201_CREATED,
+)
 async def submit_evidence(
     match_id: UUID,
     evidence_in: PostAdoptionEvidenceCreate,
@@ -282,16 +291,17 @@ async def submit_evidence(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Match not found"
         )
-        
+
     if match.adopter_id != current_user.id:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Only the adopter can submit evidence."
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the adopter can submit evidence.",
         )
-        
+
     if match.status not in [MatchStatus.ACCEPTED, MatchStatus.COMPLETED]:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, 
-            detail="Can only submit evidence for accepted or completed matches."
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Can only submit evidence for accepted or completed matches.",
         )
 
     db_evidence = PostAdoptionEvidence(
@@ -302,13 +312,14 @@ async def submit_evidence(
         status_note=evidence_in.status_note,
     )
     db.add(db_evidence)
-    
+
     # Auto-complete match on first evidence
     if match.status == MatchStatus.ACCEPTED:
         from datetime import datetime, timezone
+
         match.status = MatchStatus.COMPLETED
         match.completed_at = datetime.now(timezone.utc)
-        
+
         # Update pet status
         pet_stmt = select(Pet).where(Pet.id == match.pet_id)
         pet_result = await db.execute(pet_stmt)
@@ -321,10 +332,10 @@ async def submit_evidence(
         new_count = current_user.reputation_count + 1
         current_user.reputation_score = (current_total + EVIDENCE_BONUS) / new_count
         current_user.reputation_count = new_count
-        
+
     await db.commit()
     await db.refresh(db_evidence)
-    
+
     return db_evidence
 
 

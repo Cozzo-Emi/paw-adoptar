@@ -24,6 +24,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 def get_rate_limit(default: str) -> str:
     return default if settings.app_env != "testing" else "1000/minute"
 
+
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
@@ -43,12 +44,12 @@ async def health_check():
     }
 
 
-from app.auth.router import router as auth_router
-from app.users.router import router as users_router
-from app.pets.router import router as pets_router
-from app.matching.router import router as matching_router
-from app.chat.router import router as chat_router
-from app.moderation.router import router as moderation_router
+from app.auth.router import router as auth_router  # noqa: E402
+from app.users.router import router as users_router  # noqa: E402
+from app.pets.router import router as pets_router  # noqa: E402
+from app.matching.router import router as matching_router  # noqa: E402
+from app.chat.router import router as chat_router  # noqa: E402
+from app.moderation.router import router as moderation_router  # noqa: E402
 
 app.include_router(auth_router)
 app.include_router(users_router)

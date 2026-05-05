@@ -6,10 +6,13 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.pets.models import PetEnergyLevel, PetSize, PetStatus, Sex, Species
 
+
 class BaseSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+
 # ─── Fotos de Mascota ────────────────────────────────────
+
 
 class PetPhotoBase(BaseSchema):
     cloudinary_url: str = Field(..., max_length=500)
@@ -17,15 +20,19 @@ class PetPhotoBase(BaseSchema):
     is_primary: bool = False
     order: int = 0
 
+
 class PetPhotoCreate(PetPhotoBase):
     pass
+
 
 class PetPhotoRead(PetPhotoBase):
     id: UUID
     pet_id: UUID
     created_at: datetime
 
+
 # ─── Mascota ─────────────────────────────────────────────
+
 
 class PetBase(BaseSchema):
     name: str = Field(..., max_length=100)
@@ -54,8 +61,12 @@ class PetBase(BaseSchema):
     city: Optional[str] = Field(None, max_length=100)
     province: Optional[str] = Field(None, max_length=100)
 
+
 class PetCreate(PetBase):
-    photos: List[PetPhotoCreate] = Field(..., min_length=2, description="Al menos 2 fotos requeridas")
+    photos: List[PetPhotoCreate] = Field(
+        ..., min_length=2, description="Al menos 2 fotos requeridas"
+    )
+
 
 class PetUpdate(BaseSchema):
     name: Optional[str] = Field(None, max_length=100)
@@ -83,6 +94,7 @@ class PetUpdate(BaseSchema):
 
     city: Optional[str] = Field(None, max_length=100)
     province: Optional[str] = Field(None, max_length=100)
+
 
 class PetRead(PetBase):
     id: UUID

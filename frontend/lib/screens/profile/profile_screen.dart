@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
+import '../../services/api_client.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -96,6 +97,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 24),
 
           // Action buttons
+          if (!user.isVerifiedEmail)
+            OutlinedButton.icon(
+              onPressed: () => _showVerifyDialog(context),
+              icon: const Icon(Icons.mark_email_read),
+              label: const Text('Verificar Email'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 52),
+                foregroundColor: Colors.blue,
+              ),
+            ),
           if (user.isAdopter)
             OutlinedButton.icon(
               onPressed: () => context.go('/profile/adopter'),
@@ -125,6 +136,61 @@ class _ProfileScreenState extends State<ProfileScreen> {
               foregroundColor: Colors.red,
               minimumSize: const Size(double.infinity, 52),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showVerifyDialog(BuildContext context) {
+    final codeCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Verificar Email'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Te enviamos un código de 6 dígitos. Ingresalo:'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: codeCtrl,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              decoration: const InputDecoration(labelText: 'Código'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              try {
+                await context.read<ApiClient>().dio.post('/auth/send-verification');
+                if (ctx.mounted) ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Código enviado.')),
+                );
+              } catch (_) {}
+            },
+            child: const Text('Enviar código'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                final r = await context.read<ApiClient>().dio.post(
+                  '/auth/verify-email?token=${codeCtrl.text.trim()}');
+                if (r.data['status'] == 'verified') {
+                  context.read<AuthProvider>().refreshUser();
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Email verificado.'), backgroundColor: Color(0xFF28A745)),
+                  );
+                }
+              } catch (_) {
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  const SnackBar(content: Text('Código inválido.'), backgroundColor: Colors.red));
+              }
+            },
+            child: const Text('Verificar'),
           ),
         ],
       ),

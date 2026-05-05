@@ -18,8 +18,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
-
 # ─── Modelo: Chat ────────────────────────────────────────
+
 
 class Chat(Base):
     """
@@ -27,6 +27,7 @@ class Chat(Base):
     Se crea automáticamente cuando un match es aceptado.
     Relación 1:1 con Match.
     """
+
     __tablename__ = "chats"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -58,7 +59,8 @@ class Chat(Base):
     # ─── Relaciones ──────────────────────────────────────
     match: Mapped["Match"] = relationship("Match", backref="chat")  # noqa: F821
     messages: Mapped[list["Message"]] = relationship(
-        back_populates="chat", cascade="all, delete-orphan",
+        back_populates="chat",
+        cascade="all, delete-orphan",
         order_by="Message.created_at",
     )
 
@@ -68,11 +70,13 @@ class Chat(Base):
 
 # ─── Modelo: Mensaje ─────────────────────────────────────
 
+
 class Message(Base):
     """
     Mensaje individual dentro de un chat.
     Solo usuarios del match pueden enviar mensajes.
     """
+
     __tablename__ = "messages"
 
     id: Mapped[uuid.UUID] = mapped_column(
