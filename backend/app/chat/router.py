@@ -116,7 +116,9 @@ async def list_chats(
         .where(
             and_(
                 Chat.is_active == True,
-                or_(Chat.adopter_id == current_user.id, Chat.donor_id == current_user.id),
+                or_(
+                    Chat.adopter_id == current_user.id, Chat.donor_id == current_user.id
+                ),
             )
         )
         .order_by(Chat.created_at.desc())
@@ -213,9 +215,11 @@ async def websocket_endpoint(websocket: WebSocket, chat_id: UUID, token: str):
                     },
                     chat_id,
                 )
-                
+
                 # Fetch recipient to get FCM token
-                recipient_id = chat.donor_id if user.id == chat.adopter_id else chat.adopter_id
+                recipient_id = (
+                    chat.donor_id if user.id == chat.adopter_id else chat.adopter_id
+                )
                 recipient_stmt = select(User).where(User.id == recipient_id)
                 recipient_result = await db.execute(recipient_stmt)
                 recipient = recipient_result.scalar_one_or_none()
@@ -228,10 +232,10 @@ async def websocket_endpoint(websocket: WebSocket, chat_id: UUID, token: str):
                     if len(active_connections) < 2:
                         asyncio.create_task(
                             asyncio.to_thread(
-                                notify_new_message, 
-                                fcm_token=recipient.fcm_token, 
-                                sender_name=user.full_name, 
-                                chat_id=str(chat_id)
+                                notify_new_message,
+                                fcm_token=recipient.fcm_token,
+                                sender_name=user.full_name,
+                                chat_id=str(chat_id),
                             )
                         )
 

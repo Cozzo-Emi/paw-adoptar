@@ -20,15 +20,15 @@ if settings.cloudinary_cloud_name and settings.cloudinary_api_key:
         cloud_name=settings.cloudinary_cloud_name,
         api_key=settings.cloudinary_api_key,
         api_secret=settings.cloudinary_api_secret,
-        secure=True
+        secure=True,
     )
 
 
 def generate_signed_upload_params(folder: str, user_id: str) -> dict:
     """
-    Genera parámetros firmados para que el cliente móvil suba la imagen 
+    Genera parámetros firmados para que el cliente móvil suba la imagen
     directamente a Cloudinary sin pasar el archivo entero por nuestro backend.
-    
+
     Args:
         folder: Carpeta destino ('pets', 'avatars', 'post_adoption')
         user_id: ID del usuario para tagging y control de cuota
@@ -36,11 +36,11 @@ def generate_signed_upload_params(folder: str, user_id: str) -> dict:
     if not settings.cloudinary_api_secret:
         raise HTTPException(
             status_code=status.HTTP_501_NOT_IMPLEMENTED,
-            detail="Cloudinary is not configured."
+            detail="Cloudinary is not configured.",
         )
 
     timestamp = int(time.time())
-    
+
     # Restringimos tipos y tamaño desde la firma
     params_to_sign = {
         "timestamp": timestamp,
@@ -48,12 +48,11 @@ def generate_signed_upload_params(folder: str, user_id: str) -> dict:
         "tags": [str(user_id)],
         # strict transformations limitadas desde cloudinary dashboard
     }
-    
+
     signature = cloudinary.utils.api_sign_request(
-        params_to_sign, 
-        settings.cloudinary_api_secret
+        params_to_sign, settings.cloudinary_api_secret
     )
-    
+
     return {
         "timestamp": timestamp,
         "signature": signature,

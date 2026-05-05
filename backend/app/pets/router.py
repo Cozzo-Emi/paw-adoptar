@@ -85,11 +85,7 @@ async def create_pet(
     await db.commit()
 
     # Recargar con fotos incluidas para la respuesta
-    stmt = (
-        select(Pet)
-        .where(Pet.id == db_pet.id)
-        .options(selectinload(Pet.photos))
-    )
+    stmt = select(Pet).where(Pet.id == db_pet.id).options(selectinload(Pet.photos))
     result = await db.execute(stmt)
     return result.scalar_one()
 
@@ -102,7 +98,9 @@ async def list_pets(
     age_max: Optional[int] = Query(None, ge=0, description="Edad máxima en meses"),
     city: Optional[str] = None,
     province: Optional[str] = None,
-    donor_id: Optional[UUID] = Query(None, description="Filtrar por donante (muestra todos los estados)"),
+    donor_id: Optional[UUID] = Query(
+        None, description="Filtrar por donante (muestra todos los estados)"
+    ),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
@@ -172,11 +170,7 @@ async def get_pet(
     """
     Obtiene el detalle completo de una mascota incluyendo sus fotos.
     """
-    stmt = (
-        select(Pet)
-        .where(Pet.id == pet_id)
-        .options(selectinload(Pet.photos))
-    )
+    stmt = select(Pet).where(Pet.id == pet_id).options(selectinload(Pet.photos))
     result = await db.execute(stmt)
     pet = result.scalar_one_or_none()
 
@@ -200,11 +194,7 @@ async def update_pet(
     Actualiza los datos de una mascota.
     Solo el tutor de la mascota puede modificarla.
     """
-    stmt = (
-        select(Pet)
-        .where(Pet.id == pet_id)
-        .options(selectinload(Pet.photos))
-    )
+    stmt = select(Pet).where(Pet.id == pet_id).options(selectinload(Pet.photos))
     result = await db.execute(stmt)
     pet = result.scalar_one_or_none()
 
@@ -230,7 +220,9 @@ async def update_pet(
     return pet
 
 
-@router.post("/{pet_id}/photos", response_model=PetPhotoRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{pet_id}/photos", response_model=PetPhotoRead, status_code=status.HTTP_201_CREATED
+)
 async def add_pet_photo(
     pet_id: UUID,
     photo_in: PetPhotoCreate,

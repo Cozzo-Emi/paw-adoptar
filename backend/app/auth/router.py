@@ -29,7 +29,9 @@ settings = get_settings()
 
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 @limiter.limit(get_rate_limit("5/minute"))
-async def register_user(user_in: UserCreate, request: Request, db: AsyncSession = Depends(get_db)):
+async def register_user(
+    user_in: UserCreate, request: Request, db: AsyncSession = Depends(get_db)
+):
     """
     Registra un nuevo usuario en la plataforma.
     Valida que el email no esté ya registrado.
@@ -64,11 +66,11 @@ async def register_user(user_in: UserCreate, request: Request, db: AsyncSession 
         city=user_in.city,
         province=user_in.province,
     )
-    
+
     db.add(db_user)
     await db.commit()
     await db.refresh(db_user)
-    
+
     return db_user
 
 
@@ -77,7 +79,7 @@ async def register_user(user_in: UserCreate, request: Request, db: AsyncSession 
 async def login_access_token(
     request: Request,
     db: AsyncSession = Depends(get_db),
-    form_data: OAuth2PasswordRequestForm = Depends()
+    form_data: OAuth2PasswordRequestForm = Depends(),
 ):
     """
     OAuth2 compatible token login, requiere username (email) y password en form-data.
@@ -90,7 +92,7 @@ async def login_access_token(
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Incorrect email or password"
+            detail="Incorrect email or password",
         )
     elif not user.is_active:
         raise HTTPException(

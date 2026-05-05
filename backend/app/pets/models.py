@@ -23,8 +23,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
-
 # ─── Enums ───────────────────────────────────────────────
+
 
 class Species(str, enum.Enum):
     DOG = "dog"
@@ -50,13 +50,15 @@ class PetEnergyLevel(str, enum.Enum):
 
 class PetStatus(str, enum.Enum):
     """Estado de la publicación de la mascota."""
-    AVAILABLE = "available"   # Visible en búsquedas
-    MATCHED = "matched"       # Tiene un match activo
-    ADOPTED = "adopted"       # Adopción confirmada
-    REMOVED = "removed"       # Removida por donante o moderador
+
+    AVAILABLE = "available"  # Visible en búsquedas
+    MATCHED = "matched"  # Tiene un match activo
+    ADOPTED = "adopted"  # Adopción confirmada
+    REMOVED = "removed"  # Removida por donante o moderador
 
 
 # ─── Modelo: Mascota ────────────────────────────────────
+
 
 class Pet(Base):
     """
@@ -64,6 +66,7 @@ class Pet(Base):
     Campos obligatorios según doc: fotos (mín 2), especie, raza, edad,
     sexo, salud, vacunas, comportamiento.
     """
+
     __tablename__ = "pets"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -127,7 +130,8 @@ class Pet(Base):
     # ─── Relaciones ──────────────────────────────────────
     donor: Mapped["User"] = relationship("User", backref="pets")  # noqa: F821
     photos: Mapped[list["PetPhoto"]] = relationship(
-        back_populates="pet", cascade="all, delete-orphan",
+        back_populates="pet",
+        cascade="all, delete-orphan",
         order_by="PetPhoto.order",
     )
 
@@ -137,11 +141,13 @@ class Pet(Base):
 
 # ─── Modelo: Fotos de Mascota ────────────────────────────
 
+
 class PetPhoto(Base):
     """
     Foto de una mascota almacenada en Cloudinary.
     El doc del proyecto exige mínimo 2 fotos por ficha.
     """
+
     __tablename__ = "pet_photos"
 
     id: Mapped[uuid.UUID] = mapped_column(

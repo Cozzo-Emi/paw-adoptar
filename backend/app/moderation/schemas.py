@@ -6,10 +6,13 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.moderation.models import ReportReason, ReportStatus
 
+
 class BaseSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+
 # ─── Reporte ─────────────────────────────────────────────
+
 
 class ReportBase(BaseSchema):
     reported_user_id: Optional[UUID] = None
@@ -17,8 +20,10 @@ class ReportBase(BaseSchema):
     reason: ReportReason
     description: str
 
+
 class ReportCreate(ReportBase):
     pass
+
 
 class ReportRead(ReportBase):
     id: UUID
@@ -34,15 +39,19 @@ class ReportUpdate(BaseSchema):
     status: ReportStatus
     resolution_notes: Optional[str] = None
 
+
 # ─── Review / Valoración ─────────────────────────────────
+
 
 class ReviewBase(BaseSchema):
     rating: int = Field(..., ge=1, le=5)
     comment: Optional[str] = None
 
+
 class ReviewCreate(ReviewBase):
     match_id: UUID
     reviewed_id: UUID
+
 
 class ReviewRead(ReviewBase):
     id: UUID

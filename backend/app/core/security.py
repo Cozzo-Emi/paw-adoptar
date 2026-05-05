@@ -34,10 +34,10 @@ def create_access_token(subject: str | Any, expires_delta: timedelta = None) -> 
         expire = datetime.now(timezone.utc) + timedelta(
             minutes=settings.access_token_expire_minutes
         )
-    
+
     # El claim 'sub' (subject) almacenará el ID del usuario
     to_encode = {"exp": expire, "sub": str(subject)}
-    
+
     encoded_jwt = jwt.encode(
         to_encode, settings.secret_key, algorithm=settings.algorithm
     )
@@ -52,9 +52,9 @@ def create_refresh_token(subject: str | Any, expires_delta: timedelta = None) ->
         expire = datetime.now(timezone.utc) + timedelta(
             days=settings.refresh_token_expire_days
         )
-    
+
     to_encode = {"exp": expire, "sub": str(subject), "type": "refresh"}
-    
+
     encoded_jwt = jwt.encode(
         to_encode, settings.secret_key, algorithm=settings.algorithm
     )

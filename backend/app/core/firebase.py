@@ -33,7 +33,9 @@ def init_firebase():
         _firebase_app = "mocked"
 
 
-def send_push_notification(token: str, title: str, body: str, data: dict = None) -> bool:
+def send_push_notification(
+    token: str, title: str, body: str, data: dict = None
+) -> bool:
     if not token:
         return False
 
