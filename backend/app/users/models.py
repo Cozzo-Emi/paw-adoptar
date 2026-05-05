@@ -110,6 +110,9 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_verified_email: Mapped[bool] = mapped_column(Boolean, default=False)
     is_verified_phone: Mapped[bool] = mapped_column(Boolean, default=False)
+    email_verification_token: Mapped[str | None] = mapped_column(
+        String(8), nullable=True
+    )
     verification_level: Mapped[int] = mapped_column(
         Integer, default=VerificationLevel.NONE
     )
