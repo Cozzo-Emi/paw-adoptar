@@ -7,8 +7,9 @@ import '../../providers/chat_provider.dart';
 class ChatRoomScreen extends StatefulWidget {
   final String chatId;
   final String? otherName;
+  final String? petName;
 
-  const ChatRoomScreen({super.key, required this.chatId, this.otherName});
+  const ChatRoomScreen({super.key, required this.chatId, this.otherName, this.petName});
 
   @override
   State<ChatRoomScreen> createState() => _ChatRoomScreenState();
@@ -75,7 +76,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.otherName ?? 'Chat'),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(widget.petName ?? widget.otherName ?? 'Chat', style: const TextStyle(fontSize: 16)),
+            if (widget.petName != null && widget.otherName != null)
+              Text(widget.otherName!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
+          ],
+        ),
       ),
       body: Column(
         children: [

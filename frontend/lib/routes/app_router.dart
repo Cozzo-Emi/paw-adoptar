@@ -153,9 +153,10 @@ GoRouter buildRouter({
             builder: (context, state) {
               final chatId = state.pathParameters['chatId']!;
               final otherName = state.uri.queryParameters['name'];
+              final petName = state.uri.queryParameters['pet'];
               return ChangeNotifierProvider.value(
                 value: chatProvider,
-                child: ChatRoomScreen(chatId: chatId, otherName: otherName),
+                child: ChatRoomScreen(chatId: chatId, otherName: otherName, petName: petName),
               );
             },
           ),

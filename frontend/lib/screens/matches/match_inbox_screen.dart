@@ -152,6 +152,7 @@ class _MatchInboxScreenState extends State<MatchInboxScreen> {
         .where((m) => m.id == matchId)
         .firstOrNull;
     final otherName = match?.adopterId == userId ? match?.donorName : match?.adopterName;
+    final petName = match?.petName;
 
     var chat = chatProvider.chats
         .where((c) => c.matchId == matchId)
@@ -163,8 +164,11 @@ class _MatchInboxScreenState extends State<MatchInboxScreen> {
     }
     
     if (chat != null && mounted) {
-      final nameParam = otherName != null ? '?name=${Uri.encodeComponent(otherName)}' : '';
-      context.go('/chat/${chat.id}$nameParam');
+      final params = <String>[];
+      if (otherName != null) params.add('name=${Uri.encodeComponent(otherName)}');
+      if (petName != null) params.add('pet=${Uri.encodeComponent(petName)}');
+      final query = params.isNotEmpty ? '?${params.join('&')}' : '';
+      context.go('/chat/${chat.id}$query');
     }
   }
 }

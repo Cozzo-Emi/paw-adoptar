@@ -314,6 +314,13 @@ async def submit_evidence(
         pet_result = await db.execute(pet_stmt)
         pet = pet_result.scalar_one()
         pet.status = PetStatus.ADOPTED
+
+        # Award reputation bonus for completing post-adoption follow-up
+        EVIDENCE_BONUS = 1.0
+        current_total = current_user.reputation_score * current_user.reputation_count
+        new_count = current_user.reputation_count + 1
+        current_user.reputation_score = (current_total + EVIDENCE_BONUS) / new_count
+        current_user.reputation_count = new_count
         
     await db.commit()
     await db.refresh(db_evidence)
