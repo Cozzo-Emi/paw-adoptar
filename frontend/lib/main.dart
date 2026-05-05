@@ -13,6 +13,11 @@ import 'services/token_storage.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Show errors in production instead of grey screen
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+  };
+
   final tokenStorage = TokenStorage();
   final apiClient = ApiClient(storage: tokenStorage);
   final authService = AuthService(client: apiClient, storage: tokenStorage);
@@ -58,6 +63,22 @@ class PawApp extends StatelessWidget {
             apiClient: apiClient,
             tokenStorage: tokenStorage,
           ),
+          builder: (context, child) {
+            ErrorWidget.builder = (details) {
+              return Scaffold(
+                body: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      'Error: ${details.exception}\n\n${details.stack}',
+                      style: const TextStyle(fontSize: 12, color: Colors.red),
+                    ),
+                  ),
+                ),
+              );
+            };
+            return child!;
+          },
         ),
       ),
     );

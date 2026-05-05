@@ -91,7 +91,9 @@ GoRouter buildRouter({
         builder: (context, state) => const RoleSelectionScreen(),
       ),
       ShellRoute(
-        builder: (context, state, child) => ScaffoldWithNavBar(child: child),
+        builder: (context, state, child) {
+          return ScaffoldWithNavBar(child: child);
+        },
         routes: [
           GoRoute(
             path: '/feed',
