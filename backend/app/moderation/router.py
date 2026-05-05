@@ -12,7 +12,7 @@ from sqlalchemy.orm import selectinload
 
 from app.auth.dependencies import get_current_active_moderator, get_current_user
 from app.database import get_db
-from app.matching.models import Match, MatchStatus
+from app.matching.models import Match
 from app.moderation.models import Report, ReportStatus, Review
 from app.moderation.schemas import (
     ReportCreate,
@@ -21,7 +21,6 @@ from app.moderation.schemas import (
     ReviewCreate,
     ReviewRead,
 )
-from app.pets.models import Pet
 from app.users.models import User
 
 router = APIRouter(prefix="/moderation", tags=["Moderation"])
@@ -73,7 +72,8 @@ async def create_review(
 ):
     """
     Crea una valoración post-adopción (1-5 estrellas).
-    Solo se permite si hubo un match entre los usuarios y el match está en estado COMPLETED o ACCEPTED.
+    Solo se permite si hubo un match entre los usuarios
+    y el match está ACCEPTED o COMPLETED.
     Actualiza automáticamente la reputación del usuario valorado.
     """
     if review_in.reviewed_id == current_user.id:

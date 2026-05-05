@@ -16,8 +16,9 @@ from sqlalchemy.ext.asyncio import (
 from app.database import Base, get_db
 from app.main import app
 
-TEST_DATABASE_URL = (
-    "postgresql+asyncpg://paw_user:paw_secret_dev@db:5432/paw_test"
+TEST_DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql+asyncpg://paw_user:paw_secret_dev@db:5432/paw_test",
 )
 
 

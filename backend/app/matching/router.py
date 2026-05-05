@@ -281,7 +281,7 @@ async def submit_evidence(
     """
     Sube evidencia fotográfica post-adopción.
     Solo el adoptante puede subir evidencia para el match.
-    El match pasa a estado COMPLETED la primera vez que se sube evidencia (si no lo estaba ya).
+    El match pasa a estado COMPLETED al subir la primera evidencia.
     """
     stmt = select(Match).where(Match.id == match_id)
     result = await db.execute(stmt)
