@@ -12,7 +12,6 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Integer,
-    String,
     Text,
     func,
 )

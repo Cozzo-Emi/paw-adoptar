@@ -115,7 +115,7 @@ async def list_chats(
         select(Chat)
         .where(
             and_(
-                Chat.is_active == True,
+                Chat.is_active.is_(True),
                 or_(
                     Chat.adopter_id == current_user.id, Chat.donor_id == current_user.id
                 ),
