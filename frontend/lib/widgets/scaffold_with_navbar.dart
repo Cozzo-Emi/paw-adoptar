@@ -55,10 +55,10 @@ class ScaffoldWithNavBar extends StatelessWidget {
         selectedIcon: Icon(Icons.chat_bubble),
         label: 'Chats',
       ),
-      const NavigationDestination(
-        icon: Icon(Icons.person_outline),
-        selectedIcon: Icon(Icons.person),
-        label: 'Donante',
+      NavigationDestination(
+        icon: const Icon(Icons.person_outlined),
+        selectedIcon: const Icon(Icons.person),
+        label: user?.role == 'adopter' ? 'Adoptante' : 'Tutor',
       ),
       if (isModerator)
         const NavigationDestination(

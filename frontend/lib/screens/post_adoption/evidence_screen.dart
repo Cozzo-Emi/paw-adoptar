@@ -1,8 +1,9 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:dio/dio.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/match.dart';
@@ -22,7 +23,7 @@ class EvidenceScreen extends StatefulWidget {
 
 class _EvidenceScreenState extends State<EvidenceScreen> {
   final _imagePicker = ImagePicker();
-  File? _photo;
+  XFile? _photo;
   final _statusNoteController = TextEditingController();
   bool _isSubmitting = false;
 
@@ -34,12 +35,18 @@ class _EvidenceScreenState extends State<EvidenceScreen> {
 
   Future<void> _pickPhoto() async {
     final file = await _imagePicker.pickImage(source: ImageSource.gallery, imageQuality: 80);
-    if (file != null) {
-      setState(() => _photo = File(file.path));
-    }
+    if (file != null) setState(() => _photo = file);
   }
 
   Future<void> _submit() async {
+    // Check match status before submitting
+    if (widget.match.status != 'accepted' && widget.match.status != 'completed') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('El match debe estar aceptado para subir evidencia')),
+      );
+      return;
+    }
+
     if (_photo == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Subí una foto del animal')),
@@ -63,8 +70,10 @@ class _EvidenceScreenState extends State<EvidenceScreen> {
       final petService = PetService(client: apiClient);
 
       final signedParams = await petService.getSignedUploadParams();
-      final uploadResult = await cloudinaryService.uploadImage(
-        imageFile: _photo!,
+      final bytes = await _photo!.readAsBytes();
+      final uploadResult = await cloudinaryService.uploadImageBytes(
+        bytes: bytes,
+        filename: 'evidence.jpg',
         signedParams: signedParams,
       );
 
@@ -92,6 +101,16 @@ class _EvidenceScreenState extends State<EvidenceScreen> {
             ),
           );
         }
+      }
+    } on DioException catch (e) {
+      if (mounted) {
+        String msg = e.message ?? e.toString();
+        if (e.response?.data != null) {
+          msg = 'Error del servidor: ${e.response!.data}';
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg)),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -134,7 +153,7 @@ class _EvidenceScreenState extends State<EvidenceScreen> {
                 borderRadius: BorderRadius.circular(16),
                 child: Stack(
                   children: [
-                    Image.file(_photo!, width: double.infinity, height: 250, fit: BoxFit.cover),
+                    _PhotoPreview(file: _photo!),
                     Positioned(
                       top: 8, right: 8,
                       child: IconButton(
@@ -192,6 +211,24 @@ class _EvidenceScreenState extends State<EvidenceScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PhotoPreview extends StatelessWidget {
+  final XFile file;
+  const _PhotoPreview({required this.file});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Uint8List>(
+      future: file.readAsBytes(),
+      builder: (ctx, snapshot) {
+        if (snapshot.hasData) {
+          return Image.memory(snapshot.data!, width: double.infinity, height: 250, fit: BoxFit.cover);
+        }
+        return Container(width: double.infinity, height: 250, color: Colors.grey[200], child: const Center(child: CircularProgressIndicator()));
+      },
     );
   }
 }

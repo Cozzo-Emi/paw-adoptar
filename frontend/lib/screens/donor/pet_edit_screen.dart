@@ -8,14 +8,18 @@ import '../../services/api_client.dart';
 import '../../services/cloudinary_service.dart';
 import '../../services/pet_service.dart';
 
-class PetCreationScreen extends StatefulWidget {
-  const PetCreationScreen({super.key});
+import '../../models/pet.dart';
+import '../../providers/pet_provider.dart';
+
+class PetEditScreen extends StatefulWidget {
+  final String petId;
+  const PetEditScreen({super.key, required this.petId});
 
   @override
-  State<PetCreationScreen> createState() => _PetCreationScreenState();
+  State<PetEditScreen> createState() => _PetEditScreenState();
 }
 
-class _PetCreationScreenState extends State<PetCreationScreen> {
+class _PetEditScreenState extends State<PetEditScreen> {
   int _step = 0;
   bool _submitting = false;
   String? _error;
@@ -49,6 +53,48 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
   bool _reqYard = false;
   bool _reqExp = false;
 
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPetData();
+  }
+
+  Future<void> _loadPetData() async {
+    try {
+      final api = context.read<ApiClient>();
+      final petSvc = PetService(client: api);
+      final pet = await petSvc.fetchPet(widget.petId);
+
+      _nameCtrl.text = pet.name;
+      _species = pet.species;
+      _breedCtrl.text = pet.breed ?? '';
+      _sex = pet.sex;
+      _size = pet.size;
+      _ageCtrl.text = pet.ageMonths.toString();
+      _weightCtrl.text = pet.weightKg?.toString() ?? '';
+      _colorCtrl.text = pet.color ?? '';
+
+      _neutered = pet.isNeutered;
+      _vaccinated = pet.isVaccinated;
+      _vaccCtrl.text = pet.vaccinationDetails ?? '';
+      _healthCtrl.text = pet.healthStatus ?? '';
+      _energy = pet.energyLevel;
+      _kids = pet.goodWithKids;
+      _pets = pet.goodWithPets;
+      _descCtrl.text = pet.description;
+
+      _reqCtrl.text = pet.requirements ?? '';
+      _reqYard = pet.requiresYard;
+      _reqExp = pet.requiresExperience;
+
+      if (mounted) setState(() => _loading = false);
+    } catch (e) {
+      if (mounted) setState(() { _error = 'Error cargando mascota'; _loading = false; });
+    }
+  }
+
   @override
   void dispose() {
     _nameCtrl.dispose(); _breedCtrl.dispose(); _ageCtrl.dispose();
@@ -57,44 +103,13 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
     super.dispose();
   }
 
-  // ── PHOTOS ──────────────────────────────────────
-  Future<void> _pickPhotos() async {
-    try {
-      final files = await _picker.pickMultiImage(imageQuality: 80, limit: 5);
-      if (files.isNotEmpty) {
-        setState(() {
-          _photos.addAll(files);
-          if (_photos.length > 5) _photos.removeRange(5, _photos.length);
-        });
-      }
-    } catch (_) {}
-  }
-
-  void _removePhoto(int i) => setState(() => _photos.removeAt(i));
-
   // ── SUBMIT ──────────────────────────────────────
   Future<void> _submit() async {
-    if (_photos.length < 2) {
-      setState(() => _error = 'Subí al menos 2 fotos');
-      return;
-    }
-
     setState(() { _submitting = true; _error = null; });
 
     try {
-      final api = context.read<ApiClient>();
-      final petSvc = PetService(client: api);
-      final cloud = CloudinaryService();
-      final signed = await petSvc.getSignedUploadParams();
-
-      final uploaded = <Map<String, dynamic>>[];
-      for (int i = 0; i < _photos.length; i++) {
-        final bytes = await _photos[i].readAsBytes();
-        final r = await cloud.uploadImageBytes(bytes: bytes, filename: 'pet_$i.jpg', signedParams: signed);
-        uploaded.add({'cloudinary_url': r['cloudinary_url'], 'cloudinary_public_id': r['cloudinary_public_id']});
-      }
-
-      await petSvc.createPet({
+      final provider = context.read<PetProvider>();
+      final success = await provider.updatePet(widget.petId, {
         'name': _nameCtrl.text.trim(),
         'species': _species,
         'breed': _breedCtrl.text.trim().isEmpty ? null : _breedCtrl.text.trim(),
@@ -114,18 +129,23 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
         'requirements': _reqCtrl.text.trim().isEmpty ? null : _reqCtrl.text.trim(),
         'requires_yard': _reqYard,
         'requires_experience': _reqExp,
-        'photos': uploaded,
       });
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('¡Publicado! 🎉'), backgroundColor: Color(0xFF28A745)));
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('¡Actualizado!'), backgroundColor: Color(0xFF28A745)));
         context.go('/donor');
+      } else if (mounted) {
+        setState(() => _error = provider.error ?? 'Error al actualizar');
       }
     } on DioException catch (e) {
       if (mounted) {
         String msg = e.message ?? e.toString();
         if (e.response?.data != null) {
-          msg = 'Error del servidor: ${e.response!.data}';
+          if (e.response!.data is Map) {
+            msg = e.response!.data['detail'] ?? msg;
+          } else {
+            msg = e.response!.data.toString();
+          }
         }
         setState(() => _error = msg);
       }
@@ -136,27 +156,28 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
   }
 
   // ── UI ──────────────────────────────────────────
-  String _stepTitle(int i) => ['Fotos', 'Datos básicos', 'Salud & Comportamiento', 'Requisitos del tutor'][i];
+  String _stepTitle(int i) => ['Datos básicos', 'Salud & Comportamiento', 'Requisitos del tutor'][i];
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+
     final theme = Theme.of(context);
     final children = <Widget>[
-      _photoStep(),
       _basicStep(),
       _healthStep(),
       _requirementsStep(),
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Publicar Mascota')),
+      appBar: AppBar(title: const Text('Editar Mascota')),
       body: Column(
         children: [
           // Step indicator
           SizedBox(
             height: 56,
             child: Row(
-              children: List.generate(4, (i) {
+              children: List.generate(3, (i) {
                 final active = i <= _step;
                 return Expanded(
                   child: GestureDetector(
@@ -202,8 +223,8 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _submitting ? null : () => _step >= 3 ? _submit() : setState(() => _step++),
-                      child: _submitting ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : Text(_step >= 3 ? 'Publicar' : 'Siguiente'),
+                      onPressed: _submitting ? null : () => _step >= 2 ? _submit() : setState(() => _step++),
+                      child: _submitting ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : Text(_step >= 2 ? 'Guardar' : 'Siguiente'),
                     ),
                   ),
                 ],
@@ -213,39 +234,6 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
         ],
       ),
     );
-  }
-
-  // ── STEP: PHOTOS ────────────────────────────────
-  Widget _photoStep() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Subí al menos 2 fotos. La primera será la portada.', style: TextStyle(color: Colors.grey[600])),
-        const SizedBox(height: 16),
-        Wrap(spacing: 8, runSpacing: 8, children: [
-          ...List.generate(_photos.length, (i) => _photoTile(i)),
-          if (_photos.length < 5)
-            GestureDetector(
-              onTap: _pickPhotos,
-              child: Container(width: 100, height: 100, decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[300]!), color: Colors.grey[50]), child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.add_photo_alternate, color: Colors.grey[400]), Text('Agregar', style: TextStyle(fontSize: 11, color: Colors.grey[500]))])),
-            ),
-        ]),
-      ],
-    );
-  }
-
-  Widget _photoTile(int i) {
-    return Stack(children: [
-      ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: FutureBuilder(
-          future: _photos[i].readAsBytes(),
-          builder: (_, snap) => snap.hasData ? Image.memory(snap.data!, width: 100, height: 100, fit: BoxFit.cover) : Container(width: 100, height: 100, color: Colors.grey[200]),
-        ),
-      ),
-      Positioned(top: 2, right: 2, child: GestureDetector(onTap: () => _removePhoto(i), child: Container(padding: const EdgeInsets.all(3), decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle), child: const Icon(Icons.close, size: 14, color: Colors.white)))),
-      if (i == 0) Positioned(bottom: 2, left: 2, child: Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, borderRadius: BorderRadius.circular(6)), child: const Text('Portada', style: TextStyle(color: Colors.white, fontSize: 9)))),
-    ]);
   }
 
   // ── STEP: BASIC ─────────────────────────────────

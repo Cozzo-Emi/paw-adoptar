@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../config/constants.dart';
@@ -10,15 +10,10 @@ import 'api_client.dart';
 
 class ChatService {
   final ApiClient _client;
-  final FlutterSecureStorage _storage;
   WebSocketChannel? _channel;
   StreamController<Message>? _messageController;
 
-  ChatService({
-    required ApiClient client,
-    required FlutterSecureStorage storage,
-  })  : _client = client,
-        _storage = storage;
+  ChatService({required ApiClient client}) : _client = client;
 
   Future<Chat> createChat(String matchId) async {
     final response = await _client.dio.post(
@@ -50,34 +45,42 @@ class ChatService {
 
   Stream<Message> connectToChat(String chatId) {
     _messageController = StreamController<Message>.broadcast();
-
     _initWebSocket(chatId);
-
     return _messageController!.stream;
   }
 
-  Future<void> _initWebSocket(String chatId) async {
-    final token = await _storage.read(key: 'access_token');
-    if (token == null) return;
+  void _initWebSocket(String chatId) {
+    final token = _client.lastToken;
+    if (token == null || token.isEmpty) {
+      debugPrint('[ChatService] No token available for WebSocket');
+      return;
+    }
 
     final base = AppConstants.apiBaseUrl;
     final wsBase = base.startsWith('https') ? base.replaceFirst('https', 'wss') : base.replaceFirst('http', 'ws');
     final wsUrl = Uri.parse('$wsBase/chats/$chatId/ws?token=$token');
 
+    debugPrint('[ChatService] Connecting to $wsBase/chats/$chatId/ws');
     _channel = WebSocketChannel.connect(wsUrl);
 
     _channel!.stream.listen(
       (data) {
         if (_messageController == null || _messageController!.isClosed) return;
-        final json = jsonDecode(data as String) as Map<String, dynamic>;
-        _messageController!.add(Message.fromJson(json));
+        try {
+          final json = jsonDecode(data as String) as Map<String, dynamic>;
+          _messageController!.add(Message.fromJson(json));
+        } catch (e) {
+          debugPrint('[ChatService] Error parsing message: $e');
+        }
       },
       onError: (error) {
+        debugPrint('[ChatService] WebSocket error: $error');
         if (_messageController != null && !_messageController!.isClosed) {
           _messageController!.addError(error);
         }
       },
       onDone: () {
+        debugPrint('[ChatService] WebSocket closed');
         if (_messageController != null && !_messageController!.isClosed) {
           _messageController!.close();
         }

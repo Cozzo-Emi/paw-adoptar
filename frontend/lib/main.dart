@@ -8,13 +8,19 @@ import 'routes/app_router.dart';
 import 'services/api_client.dart';
 import 'services/auth_service.dart';
 import 'services/fcm_service.dart';
+import 'services/token_storage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final secureStorage = const FlutterSecureStorage();
-  final apiClient = ApiClient(storage: secureStorage);
-  final authService = AuthService(client: apiClient, storage: secureStorage);
+  // Show errors in production instead of grey screen
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+  };
+
+  final tokenStorage = TokenStorage();
+  final apiClient = ApiClient(storage: tokenStorage);
+  final authService = AuthService(client: apiClient, storage: tokenStorage);
   final authProvider = AuthProvider(authService: authService);
 
   try {
@@ -26,39 +32,55 @@ void main() async {
   runApp(PawApp(
     authProvider: authProvider,
     apiClient: apiClient,
-    secureStorage: secureStorage,
+    tokenStorage: tokenStorage,
   ));
 }
 
 class PawApp extends StatelessWidget {
   final AuthProvider authProvider;
   final ApiClient apiClient;
-  final FlutterSecureStorage secureStorage;
+  final TokenStorage tokenStorage;
 
   const PawApp({
     super.key,
     required this.authProvider,
     required this.apiClient,
-    required this.secureStorage,
+    required this.tokenStorage,
   });
 
   @override
   Widget build(BuildContext context) {
-  return ChangeNotifierProvider.value(
-    value: authProvider,
-    child: Provider<ApiClient>.value(
-      value: apiClient,
-      child: MaterialApp.router(
-        title: 'PAW',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        routerConfig: buildRouter(
-          authProvider: authProvider,
-          apiClient: apiClient,
-          secureStorage: secureStorage,
+    return ChangeNotifierProvider.value(
+      value: authProvider,
+      child: Provider<ApiClient>.value(
+        value: apiClient,
+        child: MaterialApp.router(
+          title: 'PAW',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          routerConfig: buildRouter(
+            authProvider: authProvider,
+            apiClient: apiClient,
+            tokenStorage: tokenStorage,
+          ),
+          builder: (context, child) {
+            ErrorWidget.builder = (details) {
+              return Scaffold(
+                body: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      'Error: ${details.exception}\n\n${details.stack}',
+                      style: const TextStyle(fontSize: 12, color: Colors.red),
+                    ),
+                  ),
+                ),
+              );
+            };
+            return child!;
+          },
         ),
       ),
-    ),
-  );
+    );
   }
 }

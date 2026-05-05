@@ -66,3 +66,5 @@ cloudinary_uploads/
 # Firebase
 firebase-adminsdk.json
 backend/firebase-adminsdk.json
+.firebase/
+public/

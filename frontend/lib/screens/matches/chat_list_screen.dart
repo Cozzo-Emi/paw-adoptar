@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../providers/chat_provider.dart';
+import '../../providers/match_provider.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
@@ -63,16 +64,21 @@ class _ChatListScreenState extends State<ChatListScreen> {
         itemCount: provider.chats.length,
         itemBuilder: (context, index) {
           final chat = provider.chats[index];
-          final isAdopter = chat.adopterId == userId;
-          final label = isAdopter ? 'Donante' : 'Adoptante';
+          // Look up pet name from match
+          final matchProvider = context.read<MatchProvider>();
+          final petName = matchProvider.matches
+              .where((m) => m.id == chat.matchId)
+              .firstOrNull
+              ?.petName;
+          final title = petName ?? (chat.adopterId == userId ? 'Tutor' : 'Adoptante');
 
           return ListTile(
             leading: CircleAvatar(
               backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-              child: Icon(Icons.person,
+              child: Icon(Icons.pets,
                   color: Theme.of(context).colorScheme.primary),
             ),
-            title: Text(label),
+            title: Text(title),
             subtitle: Text(
               chat.isActive ? 'Activo' : 'Finalizado',
               style: TextStyle(

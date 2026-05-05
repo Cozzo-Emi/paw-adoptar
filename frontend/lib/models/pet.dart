@@ -64,7 +64,17 @@ class Pet {
   });
 
   String get coverImage =>
-      photos.isNotEmpty ? photos.first.cloudinaryUrl : '';
+      photos.isNotEmpty ? _optimizeUrl(photos.first.cloudinaryUrl) : '';
+
+  String get coverImageOptimized =>
+      photos.isNotEmpty ? _optimizeUrl(photos.first.cloudinaryUrl) : '';
+
+  static String _optimizeUrl(String url) {
+    if (url.contains('cloudinary.com') && url.contains('/upload/')) {
+      return url.replaceFirst('/upload/', '/upload/q_auto:eco,f_auto/');
+    }
+    return url;
+  }
 
   String get ageFormatted {
     if (ageMonths < 12) {
@@ -140,14 +150,21 @@ class PetPhoto {
     required this.createdAt,
   });
 
+  String get optimizedUrl {
+    if (cloudinaryUrl.contains('cloudinary.com') && cloudinaryUrl.contains('/upload/')) {
+      return cloudinaryUrl.replaceFirst('/upload/', '/upload/q_auto:eco,f_auto/');
+    }
+    return cloudinaryUrl;
+  }
+
   factory PetPhoto.fromJson(Map<String, dynamic> json) {
     return PetPhoto(
       id: json['id'] as String,
       petId: json['pet_id'] as String,
-      cloudinaryUrl: json['cloudinary_url'] as String,
-      cloudinaryPublicId: json['cloudinary_public_id'] as String,
-      isPrimary: json['is_primary'] as bool,
-      order: json['order'] as int,
+      cloudinaryUrl: json['cloudinary_url'] as String? ?? '',
+      cloudinaryPublicId: json['cloudinary_public_id'] as String? ?? '',
+      isPrimary: json['is_primary'] as bool? ?? false,
+      order: json['order'] as int? ?? 0,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }

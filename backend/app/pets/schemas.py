@@ -57,6 +57,33 @@ class PetBase(BaseSchema):
 class PetCreate(PetBase):
     photos: List[PetPhotoCreate] = Field(..., min_length=2, description="Al menos 2 fotos requeridas")
 
+class PetUpdate(BaseSchema):
+    name: Optional[str] = Field(None, max_length=100)
+    species: Optional[Species] = None
+    breed: Optional[str] = Field(None, max_length=100)
+    age_months: Optional[int] = Field(None, ge=0)
+    sex: Optional[Sex] = None
+    size: Optional[PetSize] = None
+    weight_kg: Optional[float] = Field(None, gt=0)
+    color: Optional[str] = Field(None, max_length=50)
+
+    is_neutered: Optional[bool] = None
+    is_vaccinated: Optional[bool] = None
+    vaccination_details: Optional[str] = None
+    health_status: Optional[str] = None
+
+    energy_level: Optional[PetEnergyLevel] = None
+    good_with_kids: Optional[bool] = None
+    good_with_pets: Optional[bool] = None
+    description: Optional[str] = None
+
+    requirements: Optional[str] = None
+    requires_yard: Optional[bool] = None
+    requires_experience: Optional[bool] = None
+
+    city: Optional[str] = Field(None, max_length=100)
+    province: Optional[str] = Field(None, max_length=100)
+
 class PetRead(PetBase):
     id: UUID
     donor_id: UUID

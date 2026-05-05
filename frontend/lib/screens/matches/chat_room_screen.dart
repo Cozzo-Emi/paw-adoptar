@@ -7,8 +7,9 @@ import '../../providers/chat_provider.dart';
 class ChatRoomScreen extends StatefulWidget {
   final String chatId;
   final String? otherName;
+  final String? petName;
 
-  const ChatRoomScreen({super.key, required this.chatId, this.otherName});
+  const ChatRoomScreen({super.key, required this.chatId, this.otherName, this.petName});
 
   @override
   State<ChatRoomScreen> createState() => _ChatRoomScreenState();
@@ -26,8 +27,20 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     final userId = context.read<AuthProvider>().user?.id ?? '';
     _currentUserId = userId;
 
-    provider.loadChatHistory(widget.chatId);
+    // Load history first, then connect WebSocket to avoid race condition
+    _initChat();
+  }
+
+  Future<void> _initChat() async {
+    final provider = context.read<ChatProvider>();
+    await provider.loadChatHistory(widget.chatId);
     provider.connectToChat(widget.chatId);
+    // Auto-scroll to bottom after loading history
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      }
+    });
   }
 
   @override
@@ -63,7 +76,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.otherName ?? 'Chat'),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(widget.petName ?? widget.otherName ?? 'Chat', style: const TextStyle(fontSize: 16)),
+            if (widget.petName != null && widget.otherName != null)
+              Text(widget.otherName!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
+          ],
+        ),
       ),
       body: Column(
         children: [
@@ -82,7 +102,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                     itemCount: messages.length,
                     itemBuilder: (context, index) {
                       final msg = messages[index];
-                      final isMine = msg.senderId == _currentUserId;
+                      final isMine = msg.senderId == _currentUserId || msg.senderId == 'me';
 
                       return Align(
                         alignment: isMine

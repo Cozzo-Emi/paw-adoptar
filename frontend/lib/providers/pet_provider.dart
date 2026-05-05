@@ -88,6 +88,9 @@ class PetProvider extends ChangeNotifier {
     _sizeFilter = size;
     _ageMinFilter = ageMin;
     _ageMaxFilter = ageMax;
+    // Force reset loading state in case it got stuck
+    _isLoading = false;
+    notifyListeners();
     loadPets(refresh: true);
   }
 
@@ -96,11 +99,41 @@ class PetProvider extends ChangeNotifier {
     _sizeFilter = null;
     _ageMinFilter = null;
     _ageMaxFilter = null;
+    _isLoading = false;
+    notifyListeners();
     loadPets(refresh: true);
   }
 
   void clearError() {
     _error = null;
     notifyListeners();
+  }
+
+  Future<bool> updatePet(String petId, Map<String, dynamic> updateData) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final updatedPet = await _petService.updatePet(petId, updateData);
+      
+      // Update in lists
+      final index = _pets.indexWhere((p) => p.id == petId);
+      if (index != -1) {
+        _pets[index] = updatedPet;
+      }
+      if (_selectedPet?.id == petId) {
+        _selectedPet = updatedPet;
+      }
+      
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = 'Error al actualizar la mascota.';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
   }
 }

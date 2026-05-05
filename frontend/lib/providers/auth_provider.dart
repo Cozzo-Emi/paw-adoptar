@@ -119,6 +119,13 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> refreshUser() async {
+    try {
+      _user = await _authService.fetchCurrentUser();
+      notifyListeners();
+    } catch (_) {}
+  }
+
   String _extractErrorMessage(dynamic error) {
     if (error is Exception) {
       final message = error.toString();
