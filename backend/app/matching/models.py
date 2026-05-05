@@ -178,9 +178,9 @@ class PostAdoptionEvidence(Base):
 
     # ─── Relaciones ──────────────────────────────────────
     match: Mapped["Match"] = relationship(back_populates="evidence")
-    adopter: Mapped["User"] = relationship(
+    adopter: Mapped["User"] = relationship(  # noqa: F821
         "User", backref="evidence_submitted"
-    )  # noqa: F821
+    )
 
     def __repr__(self) -> str:
         return f"<PostAdoptionEvidence match={self.match_id}>"
