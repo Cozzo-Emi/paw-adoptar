@@ -88,6 +88,9 @@ class PetProvider extends ChangeNotifier {
     _sizeFilter = size;
     _ageMinFilter = ageMin;
     _ageMaxFilter = ageMax;
+    // Force reset loading state in case it got stuck
+    _isLoading = false;
+    notifyListeners();
     loadPets(refresh: true);
   }
 
@@ -96,6 +99,8 @@ class PetProvider extends ChangeNotifier {
     _sizeFilter = null;
     _ageMinFilter = null;
     _ageMaxFilter = null;
+    _isLoading = false;
+    notifyListeners();
     loadPets(refresh: true);
   }
 

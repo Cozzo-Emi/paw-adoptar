@@ -39,6 +39,14 @@ class _EvidenceScreenState extends State<EvidenceScreen> {
   }
 
   Future<void> _submit() async {
+    // Check match status before submitting
+    if (widget.match.status != 'accepted' && widget.match.status != 'completed') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('El match debe estar aceptado para subir evidencia')),
+      );
+      return;
+    }
+
     if (_photo == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Subí una foto del animal')),

@@ -98,7 +98,7 @@ class _MatchInboxScreenState extends State<MatchInboxScreen> {
                     userId: userId,
                     onAccept: () => _handleAccept(m.id),
                     onReject: () => _handleReject(m.id),
-                    onChat: () => _handleGoToChat(m.id),
+                    onChat: null,
                     onEvidence: null,
                     onReview: null,
                   )),

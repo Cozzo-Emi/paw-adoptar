@@ -106,7 +106,16 @@ class MatchProvider extends ChangeNotifier {
       await loadMatches();
       return true;
     } catch (e) {
-      _error = 'No se pudo subir la evidencia.';
+      final dioError = e.toString();
+      if (dioError.contains('400')) {
+        _error = 'El match no está en estado válido para subir evidencia.';
+      } else if (dioError.contains('403')) {
+        _error = 'Solo el adoptante puede subir evidencia.';
+      } else if (dioError.contains('404')) {
+        _error = 'Match no encontrado.';
+      } else {
+        _error = 'No se pudo subir la evidencia.';
+      }
       notifyListeners();
       return false;
     }

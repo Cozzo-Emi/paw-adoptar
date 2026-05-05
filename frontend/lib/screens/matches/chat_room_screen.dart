@@ -94,7 +94,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                     itemCount: messages.length,
                     itemBuilder: (context, index) {
                       final msg = messages[index];
-                      final isMine = msg.senderId == _currentUserId;
+                      final isMine = msg.senderId == _currentUserId || msg.senderId == 'me';
 
                       return Align(
                         alignment: isMine

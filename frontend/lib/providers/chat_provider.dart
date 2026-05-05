@@ -78,6 +78,9 @@ class ChatProvider extends ChangeNotifier {
 
   void sendMessage(String text) {
     _chatService.sendMessage(text);
+    // Add the sent message locally so it appears instantly
+    _messages = [..._messages, Message(id: DateTime.now().millisecondsSinceEpoch.toString(), chatId: '', senderId: 'me', content: text, isRead: true, createdAt: DateTime.now())];
+    notifyListeners();
   }
 
   void disconnectChat() {
