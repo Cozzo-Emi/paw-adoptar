@@ -128,7 +128,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                   itemCount: pet.photos.length,
                   itemBuilder: (context, index) {
                     return Image.network(
-                      pet.photos[index].cloudinaryUrl,
+                      pet.photos[index].optimizedUrl,
                       width: double.infinity,
                       fit: BoxFit.cover,
                       errorBuilder: (_, _, _) => Container(

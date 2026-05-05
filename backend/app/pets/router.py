@@ -7,7 +7,7 @@ Incluye integración con Cloudinary para uploads firmados.
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -16,6 +16,7 @@ from app.auth.dependencies import get_current_user
 from app.core.cloudinary_utils import generate_signed_upload_params
 from app.core.matching import calculate_compatibility
 from app.database import get_db
+from app.main import get_rate_limit, limiter
 from app.pets.models import Pet, PetPhoto, PetStatus, Species, PetSize
 from app.pets.schemas import PetCreate, PetPhotoCreate, PetPhotoRead, PetRead, PetUpdate
 from app.users.models import AdopterProfile, User
@@ -24,7 +25,9 @@ router = APIRouter(prefix="/pets", tags=["Pets"])
 
 
 @router.get("/signed-upload")
+@limiter.limit(get_rate_limit("10 per day"))
 async def get_signed_upload(
+    request: Request,
     current_user: User = Depends(get_current_user),
 ):
     """

@@ -64,7 +64,17 @@ class Pet {
   });
 
   String get coverImage =>
-      photos.isNotEmpty ? photos.first.cloudinaryUrl : '';
+      photos.isNotEmpty ? _optimizeUrl(photos.first.cloudinaryUrl) : '';
+
+  String get coverImageOptimized =>
+      photos.isNotEmpty ? _optimizeUrl(photos.first.cloudinaryUrl) : '';
+
+  static String _optimizeUrl(String url) {
+    if (url.contains('cloudinary.com') && url.contains('/upload/')) {
+      return url.replaceFirst('/upload/', '/upload/q_auto:eco,f_auto/');
+    }
+    return url;
+  }
 
   String get ageFormatted {
     if (ageMonths < 12) {
@@ -139,6 +149,13 @@ class PetPhoto {
     required this.order,
     required this.createdAt,
   });
+
+  String get optimizedUrl {
+    if (cloudinaryUrl.contains('cloudinary.com') && cloudinaryUrl.contains('/upload/')) {
+      return cloudinaryUrl.replaceFirst('/upload/', '/upload/q_auto:eco,f_auto/');
+    }
+    return cloudinaryUrl;
+  }
 
   factory PetPhoto.fromJson(Map<String, dynamic> json) {
     return PetPhoto(
